@@ -1,0 +1,35 @@
+{
+    "name": "pupop - setting",
+    "version": "0.1",
+    "description": "pupop demo",
+    "manifest_version": 3,
+    "content_scripts": [
+        {
+            // "matches": [ // Chi hien thi o nhung site ben duoi
+            //     "http://qc-portal.hdomain/sagyou/RV/*",
+            //     "https://cl-redmine02.ssl.mdomain/*",
+            //     "https://git01.mdomain/web-bill/recipient-storage-backend/-/merge_requests*",
+            //     "https://github.com/rakus-dev/ehozon-backend/pull/*",
+            //     "https://fuzzy-adventure-yr57l4q.pages.github.io/"
+            // ],
+            "matches": ["<all_urls>"], // hien thi o tat ca site
+            //"css": ["css/style.css"],
+            "js": [
+                "js/libs/jquery-3.7.1.min.js"
+            ]
+        }
+    ],
+    "action": {
+        "default_popup": "html/default_popup.html"
+    },
+    "icons": {
+    "16": "images/icon.png",
+    "48": "images/icon.png",
+    "128": "images/icon.png"
+  },
+    "permissions": [
+        "storage",
+        "unlimitedStorage",
+        "activeTab"
+    ]
+}
