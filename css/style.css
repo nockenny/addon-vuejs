@@ -1,0 +1,83 @@
+.import-container {
+    position: fixed;
+    margin-right: 20px;
+    bottom: 3%;
+    right: 0;
+    background: white;
+    border: #bbb 1px solid;
+    border-radius: 10px;
+    z-index: 999;
+}
+
+.import-container .import-content {
+    width: 447px;
+    min-width: 350px;
+}
+
+.import-container textarea,.import-container input, .import-container button {
+    background: #ddd;
+    border-radius: 5px;
+}
+
+.import-container textarea {
+    width: 437px;
+    overflow:hidden;
+    resize: none;
+}
+
+.import-container div {
+    width: 100%;
+    margin: 5px;
+}
+
+.import-container button {
+    border: solid 1px #bbb;
+    font-size: 20px;
+}
+
+.import-container button {
+    border: solid 1px #bbb;
+    font-size: 20px;
+    cursor:pointer
+}
+.import-container button:active {
+    background: cadetblue;
+    color: white;
+}
+
+.import-container .import-footer {
+    text-align: right;
+}
+
+.import-container .import-footer div {
+    min-width: 50px;
+    float: left;
+    margin-top: 0px;
+    text-align: left;
+    margin-left: 0px;
+}
+
+.import-container button.btn-import {
+    background: aqua;
+    margin-right: 11px;
+    margin-left: -10px;
+}
+
+.import-container button.btn-import:hover {
+    background: hotpink;
+}
+
+.import-container .hidden {
+    display: none;
+}
+
+.import-container .import-footer div.import {
+    width: 50px;
+}
+
+.import-container img:hover {
+    border: 1px solid hotpink;
+    background: hotpink;
+    border-radius: 50%;
+    cursor: pointer;
+}
