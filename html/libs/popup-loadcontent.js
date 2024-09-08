@@ -35,82 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	});
 
 	// Tab 3
-	var addFeature = new Vue({
-        el: '#vue-import-feature',
-        data: {
-          formFields: [
-            {name: 'category'},
-            {name: 'ticket'},
-            {name: 'title'},
-            {name: 'feature'}
-          ],
-          checkbox: { id: 'gridCheck', label: 'Remember' },
-          alert: { message: 'Success!', class: 'alert-success' }
-        },
-        render(h) {
-          const vm = this;
-
-          const formElements = vm.formFields.map(field => 
-            h('div', { class: 'col-md-12' }, [
-              h('div', { class: 'form-group' }, [
-                h('input', { 
-                  attrs: { 
-                    type: "text", 
-                    id: field.name, 
-                    placeholder: field.name 
-                  },
-                  class: "form-control"
-                })
-              ])
-            ])
-          );
-
-          const checkboxElement = h('div', { class: 'col-md-12' }, [
-            h('div', { class: 'form-group' }, [
-              h('div', { class: 'form-check' }, [
-                h('input', { 
-                  attrs: { type: 'checkbox', id: vm.checkbox.id },
-                  class: 'form-check-input'
-                }),
-                h('label', { 
-                  attrs: { for: vm.checkbox.id },
-                  class: 'form-check-label' 
-                }, vm.checkbox.label)
-              ])
-            ])
-          ]);
-
-          const buttonElement = h('div', { class: 'col-md-3' }, [
-            h('button', { class: 'btn btn-primary' }, [
-              h('i', { class: 'fa fa-save' })
-            ])
-          ]);
-
-          const alertElement = h('div', { 
-            class: `alert ${vm.alert.class} alert-dismissible col-md-5`, 
-            attrs: { role: 'alert' },
-            style: { padding: '6px', margin: '0' } 
-          }, [
-            h('button', { 
-              class: 'close', 
-              attrs: { type: 'button', 'data-dismiss': 'alert', 'aria-label': 'Close' },
-              style: { padding: '5px' }
-            }, [
-              h('span', { attrs: { 'aria-hidden': 'true' } }, 'x')
-            ]),
-            h('strong', vm.alert.message)
-          ]);
-
-          return h('div', { class: 'row' }, [
-            ...formElements,
-            checkboxElement,
-            h('div', { class: 'row' }, [
-              buttonElement,
-              alertElement
-            ])
-          ]);
-        }
-    });
+	popupFeature()
 
 	var mapQC = new Vue({
 		el: '#vue-map-qc',
@@ -157,3 +82,86 @@ document.addEventListener('DOMContentLoaded', function() {
 	  });
 
 });
+
+function popupFeature() {
+  const dataFeature = [
+    {name: 'category'},
+    {name: 'ticket'},
+    {name: 'title'},
+    {name: 'feature'},
+    {name: 'feature2'}
+  ];
+
+  new Vue({
+    el: '#vue-import-feature',
+    data: {
+      formFields: this.dataFeature,
+      checkbox: { id: 'gridCheck', label: 'Remember' },
+      alert: { message: 'Success!', class: 'alert-success' }
+    },
+    render(h) {
+      const vm = this;
+
+      const formElements = vm.formFields.map(field => 
+        h('div', { class: 'col-md-12' }, [
+          h('div', { class: 'form-group' }, [
+            h('input', { 
+              attrs: { 
+                type: "text", 
+                id: field.name, 
+                placeholder: field.name 
+              },
+              class: "form-control"
+            })
+          ])
+        ])
+      );
+
+      const checkboxElement = h('div', { class: 'col-md-12' }, [
+        h('div', { class: 'form-group' }, [
+          h('div', { class: 'form-check' }, [
+            h('input', { 
+              attrs: { type: 'checkbox', id: vm.checkbox.id },
+              class: 'form-check-input'
+            }),
+            h('label', { 
+              attrs: { for: vm.checkbox.id },
+              class: 'form-check-label' 
+            }, vm.checkbox.label)
+          ])
+        ])
+      ]);
+
+      const buttonElement = h('div', { class: 'col-md-3' }, [
+        h('button', { class: 'btn btn-primary', 
+          attrs: { type: 'button', id: 'fnSaveFeature' }}, [
+          h('i', { class: 'fa fa-save' })
+        ])
+      ]);
+
+      const alertElement = h('div', { 
+        class: `alert ${vm.alert.class} alert-dismissible col-md-5`, 
+        attrs: { role: 'alert', id: 'alert-add-feature'},
+        style: { padding: '6px', margin: '0' }
+      }, [
+        h('button', { 
+          class: 'close', 
+          attrs: { type: 'button', 'data-dismiss': 'alert', 'aria-label': 'Close' },
+          style: { padding: '5px' }
+        }, [
+          h('span', { attrs: { 'aria-hidden': 'true' } }, 'x')
+        ]),
+        h('strong', vm.alert.message)
+      ]);
+
+      return h('div', { class: 'row' }, [
+        ...formElements,
+        checkboxElement,
+        h('div', { class: 'row' }, [
+          buttonElement,
+          alertElement
+        ])
+      ]);
+    }
+});
+}

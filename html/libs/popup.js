@@ -56,4 +56,11 @@ $(document).ready(function() {
             a.click();
         });
 	});
+
+	$("#alert-add-feature").hide();
+	document.getElementById('fnSaveFeature').addEventListener('click', () => {
+		  $("#alert-add-feature").fadeTo(2000, 500).slideUp(500, function() {
+			$("#alert-add-feature").slideUp(500);
+		  });
+	});
 })
