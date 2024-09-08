@@ -40,10 +40,14 @@ var RKGithubPO = {
         window.document.body.appendChild(a);
         a.click();
     },
-    getItem: function(element) {
-        console.log(element);
-        // element is tubo frame
-        let comments = $('div[id^=discussion]', $('.js-inline-comments-container', element))
+    getItem: function(threadId) {
+        var html = $.ajax({
+            type: "GET",
+            url: "https://github.com/nockenny/addon-vuejs/pull/1/threads/" + threadId + "?rendering_on_files_tab=false",
+            async: false
+        }).responseText;
+
+        let comments = $('.timeline-comment-group', html);
         let comment = $('div.comment-body ', comments.get(0)).html()
         let answer = $('div.comment-body ', comments.get(1)).html()
         let timeComment = $('relative-time:first', $(comments.get(0))).attr('datetime')
@@ -52,17 +56,16 @@ var RKGithubPO = {
             debugger;
         }
 
-        let item = {
+        return {
             task: $('h1 .js-issue-title').html(),
             reviewer: $('a.author:first').text(),
             implementer: $('a.assignee', 'form[aria-label="Select assignees"]').text(),
             time: timeComment.substr(0, 10),
-            fileName: $('summary a', element).html(),
+            fileName: "$('summary a', element).html()",
             comment: comment.replace(/<[^>]*>/g, ""),
             answer: answer != undefined ? answer.replace(/<[^>]*>/g, "") : "",
             link: document.location.href + linkComment
         }
-        return item;
     },
     collect: async function() {
         let dataCsv = []
@@ -82,10 +85,14 @@ var RKGithubPO = {
         for (let i = 0; i < threads.length ; i++) {
             let element = $('turbo-frame', threads.get(i));
             element.each(function(i, e) {
-                let item = RKGithubPO.getItem(element);
+                let id = $(element).attr('id')
+                let threadId = id.match(/(\d+)/)[0]
+
+                let item = RKGithubPO.getItem(threadId);
                 dataCsv.push(item);
             })
         }
-        RKGithubPO.download(dataCsv)
+        console.table(dataCsv)
+        //RKGithubPO.download(dataCsv)
     }
 }

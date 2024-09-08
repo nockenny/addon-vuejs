@@ -1,107 +1,110 @@
+
+
 document.addEventListener('DOMContentLoaded', function() {
 	// Tab 2
-	var a = new Vue({
-	  el: '#birthdayData',  
-	  render(h) {
-		const vm = this;
-		const tableRows = vm.items.map(row =>
-            h('tr', [
-              h('td', row.col1),
-              h('td', row.col2),
-              h('td', row.col3),
-              h('td', row.col4),
-            ])
-          );
-
-		  return h('table', {"class": "table table-bordered table-hover"}, [
-            h('thead', [
-              h('tr', [
-                h('th', 'Cột 1'),
-                h('th', 'Cột 2'),
-                h('th', 'Cột 3'),
-                h('th', 'Cột 4'),
-              ])
-            ]),
-            h('tbody', tableRows)
-          ]);
-	  },
-	  data: {
-		items: [
-			{ col1: 'Dữ liệu 1', col2: 'Dữ liệu 2', col3: 'Dữ liệu 3', col4: 'Dữ liệu 3'},
-            { col1: 'Dữ liệu 4', col2: 'Dữ liệu 5', col3: 'Dữ liệu 6', col4: 'Dữ liệu 3'},
-            { col1: 'Dữ liệu 7', col2: 'Dữ liệu 8', col3: 'Dữ liệu 9', col4: 'Dữ liệu 3'}
-		]
-	  },
-	});
+	popupBirthDay()
 
 	// Tab 3
+	popupFormatQc()
 	popupFeature()
-
-	var mapQC = new Vue({
-		el: '#vue-map-qc',
-		data: {
-		  formFields: [
-			{ label: 'Comment', idResource: 'comment-resource', placeholderResource: 'Excel', idDes: 'comment-des', placeholderDes: 'QC' },
-			{ label: 'Function', idResource: 'function-resource', placeholderResource: 'Excel', idDes: 'function-des', placeholderDes: 'QC' },
-			{ label: 'Hour', idResource: 'hour-resource', placeholderResource: 'Excel', idDes: 'hour-des', placeholderDes: 'QC' },
-			{ label: 'Phase', idResource: 'phase-resource', placeholderResource: 'Excel', idDes: 'phase-des', placeholderDes: 'QC' }
-		  ]
-		},
-		render(h) {
-		  const vm = this;
-	
-		  // Tạo các hàng cho từng trường
-		  const rows = vm.formFields.map(field => 
-			h('div', { class: 'row mb-3' }, [
-			  h('label', { class: 'col-sm-4 col-form-label' }, field.label),
-			  h('div', { class: 'col-sm-3' }, [
-				h('input', { 
-				  attrs: { id: field.idResource, placeholder: field.placeholderResource },
-				  class: 'form-control'
-				})
-			  ]),
-			  h('div', { class: 'col-sm-3' }, [
-				h('input', { 
-				  attrs: { id: field.idDes, placeholder: field.placeholderDes },
-				  class: 'form-control'
-				})
-			  ])
-			])
-		  );
-	
-		  // Nút lưu
-		  const saveButton = h('button', { 
-			class: 'btn btn-primary', 
-			attrs: { type: 'button', id: 'fnSaveMapping' } 
-		  }, [
-			h('i', { class: 'fa fa-save' })
-		  ]);
-	
-		  return h('div', [ ...rows, saveButton ]);
-		}
-	  });
-
+	popupMapping()
 });
 
-function popupFeature() {
-  const dataFeature = [
-    {name: 'category'},
-    {name: 'ticket'},
-    {name: 'title'},
-    {name: 'feature'},
-    {name: 'feature2'}
-  ];
+function popupBirthDay() {
+  const formData = {
+    datas: [
+			{ col1: 'Name 1', col2: 'Birthday 1', col3: 'Team 3'},
+      { col1: 'Name 4', col2: 'Birthday 5', col3: 'Team 6'},
+      { col1: 'Name 7', col2: 'Birthday 8', col3: 'Team 9'}
+		]
+  }
 
   new Vue({
-    el: '#vue-import-feature',
-    data: {
-      formFields: this.dataFeature,
-      checkbox: { id: 'gridCheck', label: 'Remember' },
-      alert: { message: 'Success!', class: 'alert-success' }
-    },
+	  el: '#birthdayData',
+    data: formData,  
+	  render(h) {
+		const vm = this;
+		const tableRows = vm.datas.map(row =>
+      h('tr', [
+        h('td', row.col1),
+        h('td', row.col2),
+        h('td', row.col3),
+      ])
+    );
+
+    return h('table', {"class": "table table-bordered table-hover"}, [
+      h('thead', [
+        h('tr', [
+          h('th', 'Name'),
+          h('th', 'Birthday'),
+          h('th', 'Team')
+        ])
+      ]),
+      h('tbody', tableRows)
+    ]);
+  },
+	});
+}
+
+
+function popupFormatQc() {
+  const formQc = {
+    format: "thuys"
+  }
+
+  new Vue({
+    el: '#vue-format-qc',
+    data: formQc,
     render(h) {
       const vm = this;
 
+      const input = h('div', { class: 'form-group col-sm-12' }, [
+        h('input', { 
+          attrs: { id: 'format-qc', value: 12 },
+          class: 'form-control'
+        })
+      ])
+
+      const buttonElement = h('div', {class: 'col-sm-12'}, [
+        h('button', {
+          class: 'btn btn-primary',
+          attrs: {id: "fnSaveFormat"}
+        }, [h('i', { class: 'fa fa-save' })])
+      ]);
+
+      return h('div',{ class: 'row' }, [
+        input, buttonElement
+      ])
+    }
+  })
+
+}
+
+function popupFeature() {
+  const formFeature = {
+    formFields: [
+      {name: 'category', value: 'category111'},
+      {name: 'ticket', value: 'ticket11'},
+      {name: 'title', value: 'title11'},
+      {name: 'feature', value: 'featu1re1'},
+      {name: 'feature2', value: 'feature2111'},
+      
+    ],
+    remember: false
+  }
+
+  const formEvent = {
+    add() {
+      this.remember = !this.remember
+    }
+  }
+
+  new Vue({
+    el: '#vue-import-feature',
+    data: formFeature,
+    methods: formEvent,
+    render(h) {
+      const vm = this;
       const formElements = vm.formFields.map(field => 
         h('div', { class: 'col-md-12' }, [
           h('div', { class: 'form-group' }, [
@@ -109,7 +112,8 @@ function popupFeature() {
               attrs: { 
                 type: "text", 
                 id: field.name, 
-                placeholder: field.name 
+                placeholder: field.name,
+                value: field.value
               },
               class: "form-control"
             })
@@ -121,28 +125,34 @@ function popupFeature() {
         h('div', { class: 'form-group' }, [
           h('div', { class: 'form-check' }, [
             h('input', { 
-              attrs: { type: 'checkbox', id: vm.checkbox.id },
-              class: 'form-check-input'
+              attrs: { type: 'checkbox', id: 'gridCheck' },
+              class: 'form-check-input',
+              domProps: {
+                checked: this.remember
+              }
             }),
             h('label', { 
-              attrs: { for: vm.checkbox.id },
+              attrs: { for: 'gridCheck' },
               class: 'form-check-label' 
-            }, vm.checkbox.label)
+            }, 'Remember')
           ])
         ])
       ]);
 
       const buttonElement = h('div', { class: 'col-md-3' }, [
-        h('button', { class: 'btn btn-primary', 
-          attrs: { type: 'button', id: 'fnSaveFeature' }}, [
-          h('i', { class: 'fa fa-save' })
-        ])
+        h('button', {
+          class: 'btn btn-primary',
+          attrs: {id: "fnSaveFeature"},
+          on: {
+            click: this.add
+          }
+        }, [h('i', { class: 'fa fa-save' })])
       ]);
 
       const alertElement = h('div', { 
-        class: `alert ${vm.alert.class} alert-dismissible col-md-5`, 
-        attrs: { role: 'alert', id: 'alert-add-feature'},
-        style: { padding: '6px', margin: '0' }
+        class: `alert alert-success alert-dismissible col-md-5`, 
+        attrs: { role: 'alert' },
+        style: { padding: '6px', margin: '0' } 
       }, [
         h('button', { 
           class: 'close', 
@@ -151,7 +161,7 @@ function popupFeature() {
         }, [
           h('span', { attrs: { 'aria-hidden': 'true' } }, 'x')
         ]),
-        h('strong', vm.alert.message)
+        h('strong', 'Success!')
       ]);
 
       return h('div', { class: 'row' }, [
@@ -163,5 +173,76 @@ function popupFeature() {
         ])
       ]);
     }
-});
+  });
+}
+
+function popupMapping() {
+  const formMapping = {
+    formFields: [
+      {name: 'Comment', valueSrc: 2, valueDes: 4},
+      {name: 'Function', valueSrc: 2, valueDes: 5},
+      {name: 'Hour', valueSrc: 2, valueDes: 3},
+      {name: 'Phase', valueSrc: 2, valueDes: null}
+    ]
+  }
+
+  const formEvent = {
+    save() {
+      var mapdata = [
+        new Mapping("hour", $('#destination-hour').val(), $('#resource-hour').val()),
+        new Mapping("comment", $('#destination-comment').val(), $('#resource-comment').val()),
+        new Mapping("function", $('#destination-function').val(), $('#resource-function').val()),
+        new Mapping("phase", $('#destination-phase').val(), $('#resource-phase').val())
+      ];
+
+      chrome.storage.sync.get(["RKSetings"], function(items) {
+        if (items == undefined) {
+          items = {};
+        }
+        items.mapper = mapdata;
+        chrome.storage.sync.set({"RKSetings": items}, function() {
+          alert('Settings saved');
+        });
+      });
+    }
+  }
+
+  new Vue({
+		el: '#vue-map-qc',
+		data: formMapping,
+    methods: formEvent,
+		render(h) {
+		  const vm = this;
+	
+		  // Tạo các hàng cho từng trường
+		  const rows = vm.formFields.map(item => 
+			h('div', { class: 'row mb-3' }, [
+			  h('label', { class: 'col-sm-4 col-form-label' }, item.name),
+			  h('div', { class: 'col-sm-3' }, [
+          h('input', { 
+            attrs: { id: `resource-${item.name.toLowerCase()}`, placeholder: 'Excel', value: item.valueSrc },
+            class: 'form-control'
+          })
+			  ]),
+			  h('div', { class: 'col-sm-3' }, [
+          h('input', { 
+            attrs: { id: `destination-${item.name.toLowerCase()}`, placeholder: 'QC', value: item.valueDes },
+            class: 'form-control'
+          })
+			  ])
+			])
+		  );
+	
+		  // Nút lưu
+		  const saveButton = h('button', { 
+        class: 'btn btn-primary', 
+        attrs: { type: 'button', id: 'fnSaveMapping' },
+        on: { click: this.save}
+		  }, [
+			  h('i', { class: 'fa fa-save' })
+		  ]);
+	
+		  return h('div', [ ...rows, saveButton ]);
+		}
+	});
 }

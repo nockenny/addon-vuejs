@@ -5,25 +5,6 @@ function Mapping(name, colDes, colData) {
 }
 
 $(document).ready(function() {
-	document.getElementById('fnSaveMapping').addEventListener('click', () => {
-		var mapdata = [
-	        new Mapping("hour", $('#hour-des').val(), $('#hour-resource').val()),
-	        new Mapping("comment", $('#comment-des').val(), $('#comment-resource').val()),
-	        new Mapping("function", $('#function-des').val(), $('#function-resource').val()),
-	        new Mapping("phase", $('#phase-des').val(), $('#phase-resource').val())
-	    ];
-
-		chrome.storage.sync.get(["RKSetings"], function(items) {
-            if (items == undefined) {
-                items = {};
-            }
-            items.mapper = mapdata;
-            chrome.storage.sync.set({"RKSetings": items}, function() {
-                alert('Settings saved');
-            });
-        });
-	});
-
 	document.getElementById('fnImportSetting').addEventListener('click', () => {
 		var file = document.getElementById("importSetting").files[0];
 		if (file) {
@@ -57,10 +38,6 @@ $(document).ready(function() {
         });
 	});
 
-	$("#alert-add-feature").hide();
-	document.getElementById('fnSaveFeature').addEventListener('click', () => {
-		  $("#alert-add-feature").fadeTo(2000, 500).slideUp(500, function() {
-			$("#alert-add-feature").slideUp(500);
-		  });
-	});
+
+	
 })
