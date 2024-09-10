@@ -68,9 +68,41 @@ var RKGithubPO = {
         }
     },
     collect: async function() {
-        let dataCsv = []
+        let threadIds = []
+
+        // lấy content thread hiện có
         let threads = $('div[id^=pullrequestreview]', '.js-timeline-item.js-timeline-progressive-focus-container');
-        
+        for (var i = 0; i < threads.length ; i++) {
+            let element = $('turbo-frame', threads[i]);
+            element.each(function(i, e) {
+                let id = $(e).attr('id')
+                let threadId = id.match(/(\d+)/)[0]
+                console.log(threadId + "\n")
+                threadIds.push(threadId);
+            })
+        }
+
+        // Lấy comment ẩn
+        $('form.js-review-hidden-comment-ids').each(function(i, e) {
+            var html = $.ajax({
+                type: "GET",
+                url: e.action,
+                async: false
+            }).responseText;
+
+            $(html).each(function(i, e) {
+                let id = $(e).attr('id')
+                if (id != undefined) {
+                    let threadId = id.match(/(\d+)/)[0]
+                    console.log(threadId + "-- \n")
+                    threadIds.push(threadId);
+                }
+            })
+        })
+
+        threadIds.sort()
+
+        let dataCsv = []
         dataCsv.push({
             task: "task",
             reviewer: "reviewer",
@@ -82,17 +114,11 @@ var RKGithubPO = {
             link : "link"
         })
 
-        for (let i = 0; i < threads.length ; i++) {
-            let element = $('turbo-frame', threads.get(i));
-            element.each(function(i, e) {
-                let id = $(element).attr('id')
-                let threadId = id.match(/(\d+)/)[0]
-
-                let item = RKGithubPO.getItem(threadId);
-                dataCsv.push(item);
-            })
+        for (let i = 0; i < threadIds.length ; i++) {
+            let item = RKGithubPO.getItem(threadIds[i]);
+            dataCsv.push(item);
         }
         console.table(dataCsv)
-        //RKGithubPO.download(dataCsv)
+        RKGithubPO.download(dataCsv)
     }
 }
