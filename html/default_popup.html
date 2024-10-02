@@ -7,6 +7,7 @@
         <script src="./libs/vuejs/vue-min.js"></script>
         <script src="./libs/popup-loadcontent.js"></script>
         <script src="./libs/popup.js"></script>
+        <script src="./libs/linkHighlight.js"></script>
         <link rel="stylesheet" href="./libs/bootstrap/bootstrap.min.css">
         <link rel="stylesheet" href="./libs/font-awesome/css/font-awesome.min.css">
     </head>
@@ -24,7 +25,10 @@
         </li>
       </ul>
       <div class="tab-content" id="myTabContent">
-        <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">...</div>
+        <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+          <h1 id="example"></h1>
+          <div class="table-responsive" id="homeData"></div>
+        </div>
         <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
           <h1 id="example"></h1>
           <div class="table-responsive" id="birthdayData"></div>

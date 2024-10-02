@@ -1,6 +1,7 @@
-
-
 document.addEventListener('DOMContentLoaded', function() {
+  // Tab 1
+  popupHome()
+
 	// Tab 2
 	popupBirthDay()
 
@@ -8,7 +9,31 @@ document.addEventListener('DOMContentLoaded', function() {
 	popupFormatQc()
 	popupFeature()
 	popupMapping()
+
 });
+
+function popupHome() {
+  NOC_HIGHTLIGHT1.execute()
+
+  const formData = {
+    datas: NOC_HIGHTLIGHT1.getData()
+  }
+
+  new Vue({
+	  el: '#homeData',
+    data: formData,  
+	  render(h) {
+      const vm = this;
+      const tableRows = vm.datas.map(row =>
+        h('p', row.link)
+      );
+
+      return h('div', {
+        style: {'max-height':'300px', 'overflow-x':'auto', 'font-size':'10px'}
+      }, tableRows)
+    },
+	});
+}
 
 function popupBirthDay() {
   const formData = {
@@ -45,7 +70,6 @@ function popupBirthDay() {
   },
 	});
 }
-
 
 function popupFormatQc() {
   const formQc = {

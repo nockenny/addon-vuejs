@@ -1,4 +1,7 @@
 var RKGithubPO = {
+    dataPO: [],
+    totalPO: 0,
+    countPOGetted: 0,
     downloadFileName: function() {
         const date = new Date();
         const year = date.getFullYear();
@@ -21,9 +24,8 @@ var RKGithubPO = {
         // Create the formatted date string
         return `${branch}_${year}${paddedMonth}${paddedDay}${paddedHours}${paddedMinutes}${paddedSeconds}`;
     },
-    download: function(data) {
-        //const csvString = data.join('\r\n')
-        const csvString = data.map(row =>
+    download: function() {
+        const csvString = RKGithubPO.dataPO.map(row =>
             Object.values(row)
             .map(String)  // convert every value to String
             .map(v => v.trim().replaceAll('"', '""'))  // escape double quotes
@@ -41,31 +43,48 @@ var RKGithubPO = {
         a.click();
     },
     getItem: function(threadId) {
-        var html = $.ajax({
+        // var html = $.ajax({
+        //     type: "GET",
+        //     url: "https://github.com/nockenny/addon-vuejs/pull/1/threads/" + threadId + "?rendering_on_files_tab=false",
+        //     async: false
+        // }).responseText;
+
+        $.ajax({
             type: "GET",
             url: "https://github.com/nockenny/addon-vuejs/pull/1/threads/" + threadId + "?rendering_on_files_tab=false",
-            async: false
-        }).responseText;
+            async: true
+        }).done(function(html) {
+            RKGithubPO.countPOGetted += 1
 
-        let comments = $('.timeline-comment-group', html);
-        let comment = $('div.comment-body ', comments.get(0)).html()
-        let answer = $('div.comment-body ', comments.get(1)).html()
-        let timeComment = $('relative-time:first', $(comments.get(0))).attr('datetime')
-        let linkComment = $('relative-time:first', $(comments.get(0))).parent().attr('href')
-        if (timeComment == undefined) {
-            debugger;
-        }
+            console.log(`hoàn thành: ${RKGithubPO.countPOGetted}/${RKGithubPO.totalPO}`)
 
-        return {
-            task: $('h1 .js-issue-title').html(),
-            reviewer: $('a.author:first').text(),
-            implementer: $('a.assignee', 'form[aria-label="Select assignees"]').text(),
-            time: timeComment.substr(0, 10),
-            fileName: "$('summary a', element).html()",
-            comment: comment.replace(/<[^>]*>/g, ""),
-            answer: answer != undefined ? answer.replace(/<[^>]*>/g, "") : "",
-            link: document.location.href + linkComment
-        }
+            let comments = $('.timeline-comment-group', html);
+            let comment = $('div.comment-body ', comments.get(0)).html()
+            let answer = "Chua tra loi"
+            if (comments > 1) {
+                answer = $('div.comment-body ', comments.get(1)).html()
+            }
+            let timeComment = $('relative-time:first', $(comments.get(0))).attr('datetime')
+            let linkComment = $('relative-time:first', $(comments.get(0))).parent().attr('href')
+            if (timeComment == undefined) {
+                debugger;
+            }
+
+            RKGithubPO.dataPO.push({
+                task: $('h1 .js-issue-title').html(),
+                reviewer: $('a.author:first').text(),
+                implementer: $('a.assignee', 'form[aria-label="Select assignees"]').text(),
+                time: timeComment.substr(0, 10),
+                fileName: "$('summary a', element).html()",
+                comment: comment.replace(/<[^>]*>/g, ""),
+                answer: answer != undefined ? answer.replace(/<[^>]*>/g, "") : "",
+                link: document.location.href + linkComment
+            })
+
+            if (RKGithubPO.countPOGetted == RKGithubPO.totalPO) {
+                RKGithubPO.download()
+            } 
+        });
     },
     collect: async function() {
         let threadIds = []
@@ -77,7 +96,6 @@ var RKGithubPO = {
             element.each(function(i, e) {
                 let id = $(e).attr('id')
                 let threadId = id.match(/(\d+)/)[0]
-                console.log(threadId + "\n")
                 threadIds.push(threadId);
             })
         }
@@ -94,16 +112,17 @@ var RKGithubPO = {
                 let id = $(e).attr('id')
                 if (id != undefined) {
                     let threadId = id.match(/(\d+)/)[0]
-                    console.log(threadId + "-- \n")
                     threadIds.push(threadId);
                 }
             })
         })
 
         threadIds.sort()
+        RKGithubPO.countPOGetted = 0
+        RKGithubPO.totalPO = threadIds.length
+        RKGithubPO.dataPO = []
 
-        let dataCsv = []
-        dataCsv.push({
+        RKGithubPO.dataPO.push({
             task: "task",
             reviewer: "reviewer",
             implementer: "implementer",
@@ -116,9 +135,7 @@ var RKGithubPO = {
 
         for (let i = 0; i < threadIds.length ; i++) {
             let item = RKGithubPO.getItem(threadIds[i]);
-            dataCsv.push(item);
         }
-        console.table(dataCsv)
-        RKGithubPO.download(dataCsv)
+        console.log('done call thread')
     }
 }
