@@ -1,7 +1,7 @@
 NOC_HIGHTLIGHT1 = {
 	getted: {},
 	data: [],
-	hidden: true,
+	hidden: false,
 	getData: function() {
 		if (!NOC_HIGHTLIGHT1.hidden) {
 			return NOC_HIGHTLIGHT1.data;
@@ -24,6 +24,7 @@ NOC_HIGHTLIGHT1 = {
 		}
 
 		return NOC_HIGHTLIGHT1.data.filter(item => {
+			if (item == undefined || item.url == undefined) return;
 			var dmy = item.url.match(/-(\d+)/)[1];
 			console.log(weekDates)
 			return weekDates.includes(dmy)

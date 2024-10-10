@@ -1,7 +1,16 @@
+$(document).ready(function() {
+    $('body').prepend('<button id="myButton">Click me</button>');
+
+    $('#myButton').click(function() {
+        RKGithubPO.collect();
+    });
+})
+
+
 var RKGithubPO = {
     dataPO: [],
-    totalPO: 0,
     countPOGetted: 0,
+    threadIdList: [],
     downloadFileName: function() {
         const date = new Date();
         const year = date.getFullYear();
@@ -43,20 +52,14 @@ var RKGithubPO = {
         a.click();
     },
     getItem: function(threadId) {
-        // var html = $.ajax({
-        //     type: "GET",
-        //     url: "https://github.com/nockenny/addon-vuejs/pull/1/threads/" + threadId + "?rendering_on_files_tab=false",
-        //     async: false
-        // }).responseText;
-
         $.ajax({
             type: "GET",
-            url: "https://github.com/nockenny/addon-vuejs/pull/1/threads/" + threadId + "?rendering_on_files_tab=false",
+            url: location.href + "/threads/" + threadId + "?rendering_on_files_tab=false",
             async: true
         }).done(function(html) {
             RKGithubPO.countPOGetted += 1
 
-            console.log(`hoàn thành: ${RKGithubPO.countPOGetted}/${RKGithubPO.totalPO}`)
+            console.log(`hoàn thành: ${RKGithubPO.countPOGetted}/${RKGithubPO.threadIdList.length}`)
 
             let comments = $('.timeline-comment-group', html);
             let comment = $('div.comment-body ', comments.get(0)).html()
@@ -81,45 +84,44 @@ var RKGithubPO = {
                 link: document.location.href + linkComment
             })
 
-            if (RKGithubPO.countPOGetted == RKGithubPO.totalPO) {
+            if (RKGithubPO.countPOGetted == RKGithubPO.threadIdList.length) {
                 RKGithubPO.download()
             } 
+        }).fail(function() {
+            alert("Please contact with nockeny")
         });
     },
-    collect: async function() {
-        let threadIds = []
-
-        // lấy content thread hiện có
-        let threads = $('div[id^=pullrequestreview]', '.js-timeline-item.js-timeline-progressive-focus-container');
-        for (var i = 0; i < threads.length ; i++) {
-            let element = $('turbo-frame', threads[i]);
-            element.each(function(i, e) {
-                let id = $(e).attr('id')
-                let threadId = id.match(/(\d+)/)[0]
-                threadIds.push(threadId);
-            })
-        }
-
-        // Lấy comment ẩn
-        $('form.js-review-hidden-comment-ids').each(function(i, e) {
+    getPaging: function(content) {
+        $('.ajax-pagination-form', content).each(function() {
             var html = $.ajax({
                 type: "GET",
-                url: e.action,
+                url: $(this).attr('action'),
                 async: false
             }).responseText;
-
-            $(html).each(function(i, e) {
-                let id = $(e).attr('id')
-                if (id != undefined) {
-                    let threadId = id.match(/(\d+)/)[0]
-                    threadIds.push(threadId);
-                }
-            })
+            RKGithubPO.getThreadId(html)
+            RKGithubPO.getPaging(html)
         })
+        console.log("ket thuc");
+    },
+    getThreadId: function(content) {
+        $('turbo-frame[id^=review-thread-or-comment-id]', content).each(function() {
+            let id = $(this).attr('id')
+            let threadId = id.match(/(\d+)/)[0]
+            RKGithubPO.threadIdList.push(threadId);
+        })
+    },
+    collect: async function() {
+        // reset
+        RKGithubPO.threadIdList = []
 
-        threadIds.sort()
+        // lấy thread thread hiện có
+        RKGithubPO.getThreadId($('body'))
+
+        // Lấy get content page ẩn
+        RKGithubPO.getPaging($('body'))
+        
+        RKGithubPO.threadIdList.sort()
         RKGithubPO.countPOGetted = 0
-        RKGithubPO.totalPO = threadIds.length
         RKGithubPO.dataPO = []
 
         RKGithubPO.dataPO.push({
@@ -133,8 +135,8 @@ var RKGithubPO = {
             link : "link"
         })
 
-        for (let i = 0; i < threadIds.length ; i++) {
-            let item = RKGithubPO.getItem(threadIds[i]);
+        for (let i = 0; i < RKGithubPO.threadIdList.length ; i++) {
+            RKGithubPO.getItem(RKGithubPO.threadIdList[i]);
         }
         console.log('done call thread')
     }
