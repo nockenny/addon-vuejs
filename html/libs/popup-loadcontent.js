@@ -138,8 +138,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                   <button class="nav-link" id="${tabId}-tab" data-toggle="tab" data-target="#${tabId}" type="button" role="tab" aria-controls="${tabId}" aria-selected="false">${tab.name}</button>
                 </li>
             `;
-            // Insert custom tab right before settings tab
-            $('#setting-tab').parent().before(tabBtnHtml);
+            // Crucial: Always inject dynamic tabs BEFORE the Quản lý Tab (#tabs-manager-nav-item)
+            $('#tabs-manager-nav-item').before(tabBtnHtml);
 
             // Construct content section
             const tabContentHtml = `
@@ -154,7 +154,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                     <div class="tab-custom-html-container">${tab.html || '<p class="text-muted">Tab này chưa có mã HTML hiển thị.</p>'}</div>
                 </div>
             `;
-            $('#myTabContent').append(tabContentHtml);
+            // Insert custom tab content pane before tabs-manager pane
+            $('#tabs-manager').before(tabContentHtml);
 
             // Setup Tab selection events
             document.getElementById(`${tabId}-tab`).addEventListener('shown.bs.tab', function (e) {
@@ -183,7 +184,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             try {
                 // Warning note about MV3 restrictions on unsafe-eval
                 console.warn("Lưu ý: Manifest V3 chặn việc thực thi eval/new Function trực tiếp trong Popup. Khuyến khích chọn ngữ cảnh 'Nhúng vào trang Web' để thực thi đầy đủ.");
-                // Execute directly in context of extension popup if allowed, otherwise fail gracefully with instructions
                 const run = new Function(tab.js);
                 run();
             } catch (err) {

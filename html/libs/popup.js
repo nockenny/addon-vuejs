@@ -405,7 +405,7 @@ $(document).ready(function() {
         }
     }
 
-    $('#btn-show-create-tab').on('click', function() {
+    function resetTabForm() {
         editMode = false;
         editId = null;
         $('#custom-tab-edit-id').val('');
@@ -413,16 +413,13 @@ $(document).ready(function() {
         $('#custom-tab-html').val('');
         $('#custom-tab-js').val('');
         $('#custom-tab-exec-trigger').val('both');
-        $('#custom-tab-exec-context').val('activeTab'); // Default to robust Active Page injection context
+        $('#custom-tab-exec-context').val('activeTab');
+        $('#custom-tab-form-title').text('Đăng ký Tab');
+    }
 
-        $('#custom-tab-form-title').text('Tạo Tab Mới');
-        $('#custom-tab-form-card').slideDown();
-        $(this).hide();
-    });
-
-    $('#btn-cancel-custom-tab').on('click', function() {
-        $('#custom-tab-form-card').slideUp();
-        $('#btn-show-create-tab').show();
+    $('#btn-cancel-custom-tab').on('click', function(e) {
+        e.preventDefault();
+        resetTabForm();
     });
 
     $('.btn-boilerplate').on('click', function() {
@@ -466,8 +463,7 @@ $(document).ready(function() {
                 await addCustomTab(tabData);
             }
 
-            $('#custom-tab-form-card').slideUp();
-            $('#btn-show-create-tab').show();
+            resetTabForm();
 
             await refreshTabsList();
             if (window.renderDynamicTabs) {
@@ -494,8 +490,10 @@ $(document).ready(function() {
                 $('#custom-tab-exec-context').val(tab.execContext);
 
                 $('#custom-tab-form-title').text('Sửa Tab');
-                $('#custom-tab-form-card').slideDown();
-                $('#btn-show-create-tab').hide();
+                // Scroll smoothly to form
+                $('html, body').animate({
+                    scrollTop: $("#custom-tab-form-card").offset().top
+                }, 500);
             }
         } catch (err) {
             alert("Lỗi tải thông tin tab: " + err.message);

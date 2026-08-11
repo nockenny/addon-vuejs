@@ -88,13 +88,14 @@
           <button class="nav-link" id="notes-tab" data-toggle="tab" data-target="#notes" type="button" role="tab" aria-controls="notes" aria-selected="false">Ghi chú & Nhắc nhở</button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="tabs-manager-tab" data-toggle="tab" data-target="#tabs-manager" type="button" role="tab" aria-controls="tabs-manager" aria-selected="false">Quản lý Tab</button>
-        </li>
-        <li class="nav-item" role="presentation">
           <button class="nav-link" id="dashboard-tab" data-toggle="tab" data-target="#dashboard" type="button" role="tab" aria-controls="dashboard" aria-selected="false">Dữ liệu LargeDB</button>
         </li>
         <li class="nav-item" role="presentation">
           <button class="nav-link" id="setting-tab" data-toggle="tab" data-target="#setting" type="button" role="tab" aria-controls="setting" aria-selected="false">Cài đặt</button>
+        </li>
+        <!-- Quản lý Tab is permanently placed at the very end -->
+        <li class="nav-item" role="presentation" id="tabs-manager-nav-item">
+          <button class="nav-link" id="tabs-manager-tab" data-toggle="tab" data-target="#tabs-manager" type="button" role="tab" aria-controls="tabs-manager" aria-selected="false">Quản lý Tab</button>
         </li>
       </ul>
       <div class="tab-content" id="myTabContent">
@@ -168,83 +169,7 @@
             </div>
         </div>
 
-        <!-- Tab 3: Quản lý Tab mới & JS tùy ý -->
-        <div class="tab-pane fade" id="tabs-manager" role="tabpanel" aria-labelledby="tabs-manager-tab">
-            <h4 class="mb-3">Thêm và Quản lý các Tab Tùy biến</h4>
-            <div id="tabs-manager-container">
-                <!-- Tab List & Form to Add -->
-                <button id="btn-show-create-tab" class="btn btn-success mb-3">
-                    <i class="fa fa-plus"></i> Thêm Tab Mới
-                </button>
-
-                <div id="custom-tab-form-card" class="card mb-4" style="display: none;">
-                    <div class="card-header">
-                        <h5 id="custom-tab-form-title">Tạo Tab Mới</h5>
-                    </div>
-                    <div class="card-body">
-                        <form id="custom-tab-form">
-                            <input type="hidden" id="custom-tab-edit-id">
-                            <div class="form-group">
-                                <label>Tên Tab hiển thị *</label>
-                                <input type="text" class="form-control" id="custom-tab-name" required placeholder="Ví dụ: Công cụ QC, Đổi múi giờ">
-                            </div>
-                            <div class="form-group">
-                                <label>Giao diện HTML hiển thị trong Tab</label>
-                                <textarea class="form-control code-textarea" rows="4" id="custom-tab-html" placeholder="Nhập mã HTML..."></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>Script JavaScript tùy biến chạy trong Tab</label>
-                                <div class="mb-2">
-                                    <button type="button" class="btn btn-sm btn-secondary mr-2 btn-boilerplate" data-type="alert">Boilerplate: Alert</button>
-                                    <button type="button" class="btn btn-sm btn-secondary mr-2 btn-boilerplate" data-type="dbAdd">Boilerplate: Add largeDB record</button>
-                                    <button type="button" class="btn btn-sm btn-secondary btn-boilerplate" data-type="injectPage">Boilerplate: Inject JS into Active Page</button>
-                                </div>
-                                <textarea class="form-control code-textarea" rows="6" id="custom-tab-js" placeholder="Nhập mã JS..."></textarea>
-                            </div>
-                            <div class="form-row">
-                                <div class="col-md-6 form-group">
-                                    <label>Cách thực thi JavaScript</label>
-                                    <select class="form-control" id="custom-tab-exec-trigger">
-                                        <option value="both">Cả tự động (mở tab) và nút bấm thủ công</option>
-                                        <option value="manual">Chỉ chạy thủ công bằng nút bấm</option>
-                                        <option value="auto">Tự động chạy ngay khi mở tab</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 form-group">
-                                    <label>Ngữ cảnh thực thi (Context)</label>
-                                    <select class="form-control" id="custom-tab-exec-context">
-                                        <option value="popup">Trong Popup (Tương tác giao diện Extension)</option>
-                                        <option value="activeTab">Nhúng vào trang Web hiện tại (Active Page Content)</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-end">
-                                <button type="button" class="btn btn-light mr-2" id="btn-cancel-custom-tab">Hủy</button>
-                                <button type="submit" class="btn btn-primary">Lưu cấu hình Tab</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <h5 class="border-bottom pb-2">Danh sách Tab hiện tại của bạn</h5>
-                <div id="tabs-list-empty" class="text-muted">Chưa có tab tự định nghĩa nào. Bạn hãy nhấn Thêm Tab Mới để bắt đầu.</div>
-                <div id="tabs-list-table-container" style="display: none;">
-                    <table class="table table-bordered table-striped">
-                        <thead>
-                            <tr>
-                                <th>Tên Tab</th>
-                                <th>Thực thi</th>
-                                <th>Ngữ cảnh</th>
-                                <th style="width: 130px;">Hành động</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabs-list-tbody"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab 4: Dữ liệu LargeDB (Data Dashboard & Manager) -->
+        <!-- Tab 3: Dữ liệu LargeDB (Data Dashboard & Manager) -->
         <div class="tab-pane fade" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
             <h4 class="mb-3">Bảng Điều Khiển Dữ Liệu Lớn (IndexedDB Dashboard)</h4>
             <div id="dashboard-app-container">
@@ -292,7 +217,7 @@
             </div>
         </div>
 
-        <!-- Tab 5: Cài đặt (Import/Export & Mappings) -->
+        <!-- Tab 4: Cài đặt (Import/Export & Mappings) -->
         <div class="tab-pane fade" id="setting" role="tabpanel" aria-labelledby="setting-tab">
           <div id="accordion">
             <div class="card">
@@ -347,6 +272,79 @@
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Tab 5: Quản lý Tab mới & JS tùy ý -->
+        <div class="tab-pane fade" id="tabs-manager" role="tabpanel" aria-labelledby="tabs-manager-tab">
+            <h4 class="mb-3">Thêm và Quản lý các Tab Tùy biến</h4>
+            <div id="tabs-manager-container">
+
+                <!-- Registration Form is always shown inside the tab manager -->
+                <div id="custom-tab-form-card" class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 id="custom-tab-form-title" class="mb-0">Đăng ký Tab</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="custom-tab-form">
+                            <input type="hidden" id="custom-tab-edit-id">
+                            <div class="form-group">
+                                <label>Tên Tab hiển thị *</label>
+                                <input type="text" class="form-control" id="custom-tab-name" required placeholder="Ví dụ: Công cụ QC, Đổi múi giờ">
+                            </div>
+                            <div class="form-group">
+                                <label>Giao diện HTML hiển thị trong Tab</label>
+                                <textarea class="form-control code-textarea" rows="4" id="custom-tab-html" placeholder="Nhập mã HTML..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Script JavaScript tùy biến chạy trong Tab</label>
+                                <div class="mb-2">
+                                    <button type="button" class="btn btn-sm btn-secondary mr-2 btn-boilerplate" data-type="alert">Boilerplate: Alert</button>
+                                    <button type="button" class="btn btn-sm btn-secondary mr-2 btn-boilerplate" data-type="dbAdd">Boilerplate: Add largeDB record</button>
+                                    <button type="button" class="btn btn-sm btn-secondary btn-boilerplate" data-type="injectPage">Boilerplate: Inject JS into Active Page</button>
+                                </div>
+                                <textarea class="form-control code-textarea" rows="6" id="custom-tab-js" placeholder="Nhập mã JS..."></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="col-md-6 form-group">
+                                    <label>Cách thực thi JavaScript</label>
+                                    <select class="form-control" id="custom-tab-exec-trigger">
+                                        <option value="both">Cả tự động (mở tab) và nút bấm thủ công</option>
+                                        <option value="manual">Chỉ chạy thủ công bằng nút bấm</option>
+                                        <option value="auto">Tự động chạy ngay khi mở tab</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 form-group">
+                                    <label>Ngữ cảnh thực thi (Context)</label>
+                                    <select class="form-control" id="custom-tab-exec-context">
+                                        <option value="popup">Trong Popup (Tương tác giao diện Extension)</option>
+                                        <option value="activeTab">Nhúng vào trang Web hiện tại (Active Page Content)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <button type="button" class="btn btn-light mr-2" id="btn-cancel-custom-tab">Hủy (Cancel)</button>
+                                <button type="submit" class="btn btn-primary">Lưu cấu hình Tab (Save)</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <h5 class="border-bottom pb-2">Danh sách Tab hiện tại của bạn</h5>
+                <div id="tabs-list-empty" class="text-muted">Chưa có tab tự định nghĩa nào. Hãy điền form đăng ký ở trên để thêm tab mới.</div>
+                <div id="tabs-list-table-container" style="display: none;">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Tên Tab</th>
+                                <th>Thực thi</th>
+                                <th>Ngữ cảnh</th>
+                                <th style="width: 130px;">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabs-list-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
       </div>
