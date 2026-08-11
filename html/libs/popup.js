@@ -60,6 +60,7 @@ $(document).ready(function() {
                         refreshNotesList();
                         refreshTabsList();
                         refreshDashboard();
+                        refreshBirthdaysList();
 
                     } catch (e) {
                         alert("Lỗi phân tích file sao lưu: " + e.message);
@@ -115,6 +116,156 @@ $(document).ready(function() {
         const d = new Date(timestamp);
         return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
     }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '';
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return dateStr;
+    }
+
+    // --- Birthday list dynamic sorting, rendering, and notification system ---
+    async function refreshBirthdaysList() {
+        try {
+            const list = await getAllBirthdays();
+
+            // Sort birthdays by month & day (ascending order from Jan 1st to Dec 31st)
+            list.sort((a, b) => {
+                const dateA = new Date(a.date);
+                const dateB = new Date(b.date);
+                if (dateA.getMonth() !== dateB.getMonth()) {
+                    return dateA.getMonth() - dateB.getMonth();
+                }
+                return dateA.getDate() - dateB.getDate();
+            });
+
+            const tbody = $('#birthdays-tbody');
+            tbody.empty();
+
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+            const upcomingList = [];
+
+            if (list.length === 0) {
+                $('#birthdays-list-empty').show();
+                $('#birthdays-table-container').hide();
+                $('#upcoming-birthdays-alert').hide();
+            } else {
+                $('#birthdays-list-empty').hide();
+                $('#birthdays-table-container').show();
+
+                list.forEach(item => {
+                    const dob = new Date(item.date);
+
+                    // Calculate next birthday date
+                    let nextBday = new Date(currentYear, dob.getMonth(), dob.getDate());
+                    if (nextBday.getTime() < todayStart) {
+                        nextBday.setFullYear(currentYear + 1);
+                    }
+
+                    // Calculate upcoming age
+                    const ageNext = nextBday.getFullYear() - dob.getFullYear();
+
+                    // Check if upcoming birthday is within the next 7 days
+                    const diffTime = nextBday.getTime() - todayStart;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    if (diffDays >= 0 && diffDays <= 7) {
+                        upcomingList.push({
+                            name: item.name,
+                            daysLeft: diffDays,
+                            nextAge: ageNext,
+                            bdayFormatted: formatDate(item.date)
+                        });
+                    }
+
+                    const rowHtml = `
+                        <tr>
+                            <td><strong>${item.name}</strong></td>
+                            <td>${formatDate(item.date)}</td>
+                            <td>${ageNext} tuổi (vào ngày ${dob.getDate()}/${dob.getMonth() + 1})</td>
+                            <td>
+                                <button class="btn btn-sm btn-danger btn-delete-birthday" data-id="${item.id}">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.append(rowHtml);
+                });
+
+                // Display upcoming birthdays banner and trigger chrome notifications
+                const alertBanner = $('#upcoming-birthdays-alert');
+                const alertListContainer = $('#upcoming-birthdays-list');
+                alertListContainer.empty();
+
+                if (upcomingList.length > 0) {
+                    alertBanner.show();
+                    upcomingList.forEach(up => {
+                        const daysLeftText = up.daysLeft === 0 ? "hôm nay!" : `sau ${up.daysLeft} ngày nữa (${up.bdayFormatted})`;
+                        const itemHtml = `<li><strong>${up.name}</strong> bước sang tuổi ${up.nextAge} vào <strong>${daysLeftText}</strong></li>`;
+                        alertListContainer.append(itemHtml);
+
+                        // Trigger Chrome System Notification
+                        if (window.chrome && chrome.notifications) {
+                            chrome.notifications.create(`bday_${up.name}_${up.daysLeft}`, {
+                                type: "basic",
+                                iconUrl: "../images/icon.png",
+                                title: "Sắp tới sinh nhật!",
+                                message: `Sắp tới sinh nhật của ${up.name} bước sang tuổi ${up.nextAge} vào ${daysLeftText}.`,
+                                priority: 1
+                            });
+                        }
+                    });
+                } else {
+                    alertBanner.hide();
+                }
+            }
+        } catch (err) {
+            console.error("Lỗi tải danh sách sinh nhật: ", err);
+        }
+    }
+
+    // Add Birthday submit trigger
+    $('#add-birthday-form').on('submit', async function(e) {
+        e.preventDefault();
+        const name = $('#birthday-name').val();
+        const bdate = $('#birthday-date').val();
+
+        if (!name.trim() || !bdate) return;
+
+        try {
+            await addBirthday({
+                name: name,
+                date: bdate,
+                createdAt: Date.now()
+            });
+
+            $('#birthday-name').val('');
+            $('#birthday-date').val('');
+            await refreshBirthdaysList();
+        } catch (err) {
+            alert("Lỗi thêm sinh nhật: " + err.message);
+        }
+    });
+
+    // Delete Birthday trigger
+    $(document).on('click', '.btn-delete-birthday', async function() {
+        const id = $(this).data('id');
+        if (confirm("Bạn có muốn xóa người này khỏi danh sách sinh nhật không?")) {
+            try {
+                await deleteBirthday(Number(id));
+                await refreshBirthdaysList();
+            } catch (err) {
+                alert("Lỗi xóa: " + err.message);
+            }
+        }
+    });
+
 
     // --- 1. Notes & Reminders Logic ---
     async function refreshNotesList() {
@@ -502,9 +653,11 @@ $(document).ready(function() {
     window.refreshNotesList = refreshNotesList;
     window.refreshTabsList = refreshTabsList;
     window.refreshDashboard = refreshDashboard;
+    window.refreshBirthdaysList = refreshBirthdaysList;
 
     // Load initial data
     refreshNotesList();
     refreshTabsList();
     refreshDashboard();
+    refreshBirthdaysList();
 });

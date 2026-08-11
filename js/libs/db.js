@@ -23,6 +23,11 @@ function openDB() {
             if (!db.objectStoreNames.contains("general_large_data")) {
                 db.createObjectStore("general_large_data", { keyPath: "id", autoIncrement: true });
             }
+
+            // 4. Table for birthdays
+            if (!db.objectStoreNames.contains("birthdays")) {
+                db.createObjectStore("birthdays", { keyPath: "id", autoIncrement: true });
+            }
         };
 
         request.onsuccess = (event) => {
@@ -170,17 +175,52 @@ async function deleteGeneralData(id) {
     });
 }
 
+// Birthdays API
+async function getAllBirthdays() {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction("birthdays", "readonly");
+        const store = transaction.objectStore("birthdays");
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+
+async function addBirthday(bday) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction("birthdays", "readwrite");
+        const store = transaction.objectStore("birthdays");
+        const request = store.add(bday);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+
+async function deleteBirthday(id) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction("birthdays", "readwrite");
+        const store = transaction.objectStore("birthdays");
+        const request = store.delete(id);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+
 // Backup & Restore Database Functions
 async function exportFullBackup() {
     const db = await openDB();
     const backup = {
         custom_tabs: [],
         notes_reminders: [],
-        general_large_data: []
+        general_large_data: [],
+        birthdays: []
     };
 
     return new Promise((resolve, reject) => {
-        const transaction = db.transaction(["custom_tabs", "notes_reminders", "general_large_data"], "readonly");
+        const transaction = db.transaction(["custom_tabs", "notes_reminders", "general_large_data", "birthdays"], "readonly");
 
         transaction.objectStore("custom_tabs").getAll().onsuccess = (e) => {
             backup.custom_tabs = e.target.result;
@@ -192,6 +232,10 @@ async function exportFullBackup() {
 
         transaction.objectStore("general_large_data").getAll().onsuccess = (e) => {
             backup.general_large_data = e.target.result;
+        };
+
+        transaction.objectStore("birthdays").getAll().onsuccess = (e) => {
+            backup.birthdays = e.target.result;
         };
 
         transaction.oncomplete = () => {
@@ -208,12 +252,13 @@ async function importFullBackup(backup) {
     const db = await openDB();
 
     return new Promise((resolve, reject) => {
-        const transaction = db.transaction(["custom_tabs", "notes_reminders", "general_large_data"], "readwrite");
+        const transaction = db.transaction(["custom_tabs", "notes_reminders", "general_large_data", "birthdays"], "readwrite");
 
         // Clear all first
         transaction.objectStore("custom_tabs").clear();
         transaction.objectStore("notes_reminders").clear();
         transaction.objectStore("general_large_data").clear();
+        transaction.objectStore("birthdays").clear();
 
         // Add all custom_tabs
         if (backup.custom_tabs && Array.isArray(backup.custom_tabs)) {
@@ -236,6 +281,14 @@ async function importFullBackup(backup) {
             const generalDataStore = transaction.objectStore("general_large_data");
             backup.general_large_data.forEach(item => {
                 generalDataStore.add(item);
+            });
+        }
+
+        // Add all birthdays
+        if (backup.birthdays && Array.isArray(backup.birthdays)) {
+            const birthdaysStore = transaction.objectStore("birthdays");
+            backup.birthdays.forEach(item => {
+                birthdaysStore.add(item);
             });
         }
 

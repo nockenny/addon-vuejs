@@ -1,39 +1,4 @@
 document.addEventListener('DOMContentLoaded', async function() {
-    // Tab 1: Default Profile Vue instance
-    var a = new Vue({
-        el: '#birthdayData',
-        render(h) {
-            const vm = this;
-            const tableRows = vm.items.map(row =>
-                h('tr', [
-                    h('td', row.col1),
-                    h('td', row.col2),
-                    h('td', row.col3),
-                    h('td', row.col4),
-                ])
-            );
-
-            return h('table', {"class": "table table-bordered table-hover"}, [
-                h('thead', [
-                    h('tr', [
-                        h('th', 'Cột 1'),
-                        h('th', 'Cột 2'),
-                        h('th', 'Cột 3'),
-                        h('th', 'Cột 4'),
-                    ])
-                ]),
-                h('tbody', tableRows)
-            ]);
-        },
-        data: {
-            items: [
-                { col1: 'Dữ liệu 1', col2: 'Dữ liệu 2', col3: 'Dữ liệu 3', col4: 'Dữ liệu 3'},
-                { col1: 'Dữ liệu 4', col2: 'Dữ liệu 5', col3: 'Dữ liệu 6', col4: 'Dữ liệu 3'},
-                { col1: 'Dữ liệu 7', col2: 'Dữ liệu 8', col3: 'Dữ liệu 9', col4: 'Dữ liệu 3'}
-            ]
-        },
-    });
-
     // Tab 2: Add Feature original Vue instance (for legacy compatibility)
     var addFeature = new Vue({
         el: '#vue-import-feature',

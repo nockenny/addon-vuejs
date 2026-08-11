@@ -82,7 +82,7 @@
       <ul class="nav nav-tabs" id="myTab" role="tablist">
         <!-- Default Core Tabs -->
         <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="home-tab" data-toggle="tab" data-target="#home" type="button" role="tab" aria-controls="home" aria-selected="true">Home</button>
+          <button class="nav-link active" id="home-tab" data-toggle="tab" data-target="#home" type="button" role="tab" aria-controls="home" aria-selected="true">Home (Sinh nhật)</button>
         </li>
         <li class="nav-item" role="presentation">
           <button class="nav-link" id="notes-tab" data-toggle="tab" data-target="#notes" type="button" role="tab" aria-controls="notes" aria-selected="false">Ghi chú & Nhắc nhở</button>
@@ -99,10 +99,48 @@
       </ul>
       <div class="tab-content" id="myTabContent">
 
-        <!-- Tab 1: Home (Default Profile Table) -->
+        <!-- Tab 1: Home (Dữ liệu sinh nhật động) -->
         <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
-          <h4 class="mb-3">Dữ liệu Mẫu Sinh nhật</h4>
-          <div class="table-responsive" id="birthdayData"></div>
+          <h4 class="mb-3">Danh Sách Sinh Nhật Động (IndexedDB)</h4>
+
+          <!-- Warning banner for upcoming birthdays -->
+          <div id="upcoming-birthdays-alert" class="alert alert-warning" style="display: none;">
+              <h5><i class="fa fa-gift"></i> Sắp tới sinh nhật của:</h5>
+              <ul id="upcoming-birthdays-list" class="mb-0"></ul>
+          </div>
+
+          <div class="card mb-4 bg-light">
+              <div class="card-body">
+                  <h5 class="card-title">Thêm sinh nhật mới</h5>
+                  <form id="add-birthday-form" class="form-row align-items-center">
+                      <div class="col-md-5">
+                          <input type="text" class="form-control mb-2" id="birthday-name" placeholder="Họ và tên..." required>
+                      </div>
+                      <div class="col-md-4">
+                          <input type="date" class="form-control mb-2" id="birthday-date" required>
+                      </div>
+                      <div class="col-md-3">
+                          <button type="submit" class="btn btn-success mb-2 w-100"><i class="fa fa-user-plus"></i> Thêm</button>
+                      </div>
+                  </form>
+              </div>
+          </div>
+
+          <div id="birthdays-list-empty" class="text-muted">Chưa có dữ liệu sinh nhật. Hãy điền form trên để thêm.</div>
+
+          <div id="birthdays-table-container" class="table-responsive" style="display: none;">
+              <table class="table table-bordered table-striped table-hover">
+                  <thead class="thead-dark">
+                      <tr>
+                          <th>Họ và Tên</th>
+                          <th>Ngày Sinh Nhật</th>
+                          <th>Tuổi sắp tới</th>
+                          <th style="width: 70px;">Hành động</th>
+                      </tr>
+                  </thead>
+                  <tbody id="birthdays-tbody"></tbody>
+              </table>
+          </div>
         </div>
 
         <!-- Tab 2: Ghi chú & Nhắc nhở -->
