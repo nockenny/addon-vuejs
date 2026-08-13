@@ -98,6 +98,9 @@
     </style>
 </head>
 <body>
+    <!-- Floating Toast Container for Bootstrap Notifications -->
+    <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; width: 320px;"></div>
+
     <div class="container">
       <ul class="nav nav-tabs" id="myTab" role="tablist">
         <!-- Default Core Tabs -->
@@ -153,6 +156,7 @@
                           <th>Họ và Tên</th>
                           <th>Ngày Sinh Nhật</th>
                           <th>Tuổi sắp tới</th>
+                          <th>Đếm ngược</th>
                           <th style="width: 70px;">Hành động</th>
                       </tr>
                   </thead>
@@ -277,10 +281,16 @@
                             </div>
                             <div class="form-group">
                                 <label>Script JavaScript tùy biến chạy trong Tab</label>
-                                <div class="mb-2">
-                                    <button type="button" class="btn btn-sm btn-secondary mr-2 btn-boilerplate" data-type="alert">Boilerplate: Alert</button>
-                                    <button type="button" class="btn btn-sm btn-secondary mr-2 btn-boilerplate" data-type="dbAdd">Boilerplate: Add largeDB record</button>
-                                    <button type="button" class="btn btn-sm btn-secondary btn-boilerplate" data-type="injectPage">Boilerplate: Inject JS into Active Page</button>
+                                <div class="mb-2 d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <button type="button" class="btn btn-sm btn-secondary mr-2 btn-boilerplate" data-type="alert">Boilerplate: Alert</button>
+                                        <button type="button" class="btn btn-sm btn-secondary mr-2 btn-boilerplate" data-type="dbAdd">Boilerplate: Add largeDB record</button>
+                                        <button type="button" class="btn btn-sm btn-secondary btn-boilerplate" data-type="injectPage">Boilerplate: Inject JS into Active Page</button>
+                                    </div>
+                                    <div>
+                                        <button type="button" class="btn btn-sm btn-info mr-2" id="btn-format-js" title="Định dạng thụt lề cho JS và HTML"><i class="fa fa-magic"></i> Auto Format</button>
+                                        <button type="button" class="btn btn-sm btn-warning" id="btn-check-syntax-js" title="Kiểm tra lỗi cú pháp JS nhanh"><i class="fa fa-code"></i> Check Syntax</button>
+                                    </div>
                                 </div>
                                 <textarea class="form-control code-textarea" rows="6" id="custom-tab-js" placeholder="Nhập mã JS..."></textarea>
                             </div>

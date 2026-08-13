@@ -33,6 +33,20 @@ function openDB() {
     });
 }
 
+// Setup standard background alarms on startup or installation
+chrome.runtime.onInstalled.addListener(() => {
+    // Alarm to check monthly birthdays once every day
+    chrome.alarms.create("daily_birthday_check", {
+        periodInMinutes: 1440 // Every 24 hours
+    });
+});
+
+chrome.runtime.onStartup.addListener(() => {
+    chrome.alarms.create("daily_birthday_check", {
+        periodInMinutes: 1440
+    });
+});
+
 chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name.startsWith("reminder_")) {
         const id = alarm.name.split("_")[1];
@@ -45,7 +59,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 
             getReq.onsuccess = () => {
                 const note = getReq.result;
-                if (note && note.status !== "dismissed") {
+                if (note && note.status !== "dismissed" && note.status !== "done") {
                     chrome.notifications.create(`note_${id}`, {
                         type: "basic",
                         iconUrl: "../images/icon.png",
@@ -63,6 +77,42 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
             };
         } catch (err) {
             console.error("Error reading indexedDB in background service worker: ", err);
+        }
+    } else if (alarm.name === "daily_birthday_check") {
+        // Run birthday scan in background at a fixed time
+        try {
+            const db = await openDB();
+            const transaction = db.transaction("birthdays", "readonly");
+            const store = transaction.objectStore("birthdays");
+            const getReq = store.getAll();
+
+            getReq.onsuccess = () => {
+                const list = getReq.result || [];
+                const now = new Date();
+                const currentMonth = now.getMonth();
+                const currentDay = now.getDate();
+
+                const birthdaysToday = list.filter(item => {
+                    const dob = new Date(item.date);
+                    return dob.getMonth() === currentMonth && dob.getDate() === currentDay;
+                });
+
+                if (birthdaysToday.length > 0) {
+                    birthdaysToday.forEach(b => {
+                        const dob = new Date(b.date);
+                        const ageNext = now.getFullYear() - dob.getFullYear();
+                        chrome.notifications.create(`bday_today_${b.id}`, {
+                            type: "basic",
+                            iconUrl: "../images/icon.png",
+                            title: "Hôm nay có sinh nhật mới! 🎂",
+                            message: `Chúc mừng sinh nhật ${b.name} bước sang tuổi ${ageNext}!`,
+                            priority: 2
+                        });
+                    });
+                }
+            };
+        } catch (err) {
+            console.error("Error checking birthdays in background: ", err);
         }
     }
 });
