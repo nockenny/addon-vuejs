@@ -1,50 +1,224 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Popup</title>
-        <script src="./libs/jquery-3.7.1.min.js"></script>
-        <script src="./libs/bootstrap/bootstrap.min.js"></script>
-        <script src="./libs/vuejs/vue-min.js"></script>
-        <script src="./libs/popup-loadcontent.js"></script>
-        <script src="./libs/popup.js"></script>
-        <link rel="stylesheet" href="./libs/bootstrap/bootstrap.min.css">
-        <link rel="stylesheet" href="./libs/font-awesome/css/font-awesome.min.css">
-    </head>
+    <meta charset="utf-8">
+    <title>Popup - Advanced Extension Settings</title>
+    <!-- Include JS Dependencies -->
+    <script src="./libs/jquery-3.7.1.min.js"></script>
+    <script src="./libs/bootstrap/bootstrap.min.js"></script>
+    <script src="./libs/vuejs/vue-min.js"></script>
+    <!-- Custom IndexedDB Helpers -->
+    <script src="../js/libs/db.js"></script>
+    <!-- App Logic Scripts -->
+    <script src="./libs/popup-loadcontent.js"></script>
+    <script src="./libs/popup.js"></script>
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="./libs/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="./libs/font-awesome/css/font-awesome.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .container {
+            width: 750px;
+            max-width: 750px;
+            padding: 15px;
+        }
+        .nav-tabs .nav-link {
+            font-weight: bold;
+            color: #495057;
+        }
+        .nav-tabs .nav-link.active {
+            color: #007bff;
+        }
+        .tab-content {
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            padding: 20px;
+            border-radius: 0 0 5px 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            min-height: 400px;
+        }
+        .card-header h5 button {
+            color: #333;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .card-header h5 button:hover {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .btn-sm-action {
+            padding: 2px 8px;
+            font-size: 12px;
+        }
+        /* Style for note items */
+        .note-item {
+            border-left: 4px solid #28a745;
+            background: #fdfdfd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 3px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .note-item.alerted {
+            border-left-color: #dc3545;
+        }
+        /* Custom tab code editor styling */
+        .code-textarea {
+            font-family: "Courier New", Courier, monospace;
+            background-color: #272822;
+            color: #f8f8f2;
+            padding: 10px;
+            border-radius: 4px;
+            line-height: 1.4;
+        }
+        /* Drag and Drop Zone styling */
+        .drag-drop-zone {
+            border: 2px dashed #007bff;
+            border-radius: 5px;
+            background-color: #f1f8ff;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+            margin-bottom: 15px;
+        }
+        .drag-drop-zone.dragover {
+            background-color: #e1f0ff;
+            border-color: #0056b3;
+        }
+        .drag-drop-zone i {
+            font-size: 30px;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
 <body>
-    <div class="container" style="width: 600px;">
+    <!-- Floating Toast Container for Bootstrap Notifications -->
+    <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; width: 320px;"></div>
+
+    <div class="container">
       <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <!-- Default Core Tabs -->
         <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="home-tab" data-toggle="tab" data-target="#home" type="button" role="tab" aria-controls="home" aria-selected="true">Home</button>
+          <button class="nav-link active" id="home-tab" data-toggle="tab" data-target="#home" type="button" role="tab" aria-controls="home" aria-selected="true">Home (Sinh nhật)</button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="profile-tab" data-toggle="tab" data-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="false">Profile</button>
+          <button class="nav-link" id="notes-tab" data-toggle="tab" data-target="#notes" type="button" role="tab" aria-controls="notes" aria-selected="false">Ghi chú & Nhắc nhở</button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="setting-tab" data-toggle="tab" data-target="#setting" type="button" role="tab" aria-controls="setting" aria-selected="false">Setting</button>
+          <button class="nav-link" id="setting-tab" data-toggle="tab" data-target="#setting" type="button" role="tab" aria-controls="setting" aria-selected="false">Cài đặt</button>
+        </li>
+        <!-- Quản lý Tab is permanently placed at the very end -->
+        <li class="nav-item" role="presentation" id="tabs-manager-nav-item">
+          <button class="nav-link" id="tabs-manager-tab" data-toggle="tab" data-target="#tabs-manager" type="button" role="tab" aria-controls="tabs-manager" aria-selected="false">Quản lý Tab</button>
         </li>
       </ul>
       <div class="tab-content" id="myTabContent">
-        <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">...</div>
-        <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
-          <h1 id="example"></h1>
-          <div class="table-responsive" id="birthdayData"></div>
+
+        <!-- Tab 1: Home (Dữ liệu sinh nhật động) -->
+        <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+          <h4 class="mb-3">Danh Sách Sinh Nhật Động (IndexedDB)</h4>
+
+          <!-- Warning banner for birthdays within this month -->
+          <div id="upcoming-birthdays-alert" class="alert alert-warning" style="display: none;">
+              <h5><i class="fa fa-gift"></i> Sinh nhật trong tháng này:</h5>
+              <ul id="upcoming-birthdays-list" class="mb-0"></ul>
+          </div>
+
+          <div class="card mb-4 bg-light">
+              <div class="card-body">
+                  <h5 class="card-title">Thêm sinh nhật mới</h5>
+                  <form id="add-birthday-form" class="form-row align-items-center">
+                      <div class="col-md-5">
+                          <input type="text" class="form-control mb-2" id="birthday-name" placeholder="Họ và tên..." required>
+                      </div>
+                      <div class="col-md-4">
+                          <input type="date" class="form-control mb-2" id="birthday-date" required>
+                      </div>
+                      <div class="col-md-3">
+                          <button type="submit" class="btn btn-success mb-2 w-100"><i class="fa fa-user-plus"></i> Thêm</button>
+                      </div>
+                  </form>
+              </div>
+          </div>
+
+          <div id="birthdays-list-empty" class="text-muted">Chưa có dữ liệu sinh nhật. Hãy điền form trên để thêm.</div>
+
+          <div id="birthdays-table-container" class="table-responsive" style="display: none;">
+              <table class="table table-bordered table-striped table-hover">
+                  <thead class="thead-dark">
+                      <tr>
+                          <th>Họ và Tên</th>
+                          <th>Ngày Sinh Nhật</th>
+                          <th>Tuổi sắp tới</th>
+                          <th>Đếm ngược</th>
+                          <th style="width: 70px;">Hành động</th>
+                      </tr>
+                  </thead>
+                  <tbody id="birthdays-tbody"></tbody>
+              </table>
+          </div>
         </div>
+
+        <!-- Tab 2: Ghi chú & Nhắc nhở -->
+        <div class="tab-pane fade" id="notes" role="tabpanel" aria-labelledby="notes-tab">
+            <h4 class="mb-3">Ghi chú nhắc nhở nhanh</h4>
+            <div id="notes-app-container">
+                <form id="add-note-form" class="mb-4">
+                    <div class="form-group">
+                        <textarea class="form-control" id="note-text-input" placeholder="Nhập nội dung ghi chú nhanh..." rows="2" required></textarea>
+                    </div>
+                    <div class="form-row align-items-center">
+                        <div class="col-auto">
+                            <label class="sr-only" for="reminder-time-input">Thời gian nhắc nhở</label>
+                            <input type="datetime-local" class="form-control mb-2" id="reminder-time-input">
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary mb-2"><i class="fa fa-plus"></i> Lưu Ghi chú</button>
+                        </div>
+                    </div>
+                </form>
+
+                <h5 class="border-bottom pb-2">Danh sách ghi chú</h5>
+                <div id="notes-list-empty" class="text-muted">Chưa có ghi chú nào được lưu.</div>
+                <div id="notes-list-container"></div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Cài đặt (Import/Export & Mappings) -->
         <div class="tab-pane fade" id="setting" role="tabpanel" aria-labelledby="setting-tab">
           <div id="accordion">
             <div class="card">
               <div class="card-header" id="headingOne">
                 <h5 class="mb-0">
                   <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                    Import / Export
+                    Sao lưu và khôi phục (Backup / Restore)
                   </button>
                 </h5>
               </div>
 
               <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
                 <div class="card-body">
-                  <input type="file" name="importSetting" id="importSetting">
-                  <button type="button" class="btn btn-primary" id="fnImportSetting"><i class="fa fa-upload" aria-hidden="true"></i></button>
-                  <button type="button" class="btn btn-primary" id="fnExportSetting"><i class="fa fa-download" aria-hidden="true"></i></button>
+                  <p class="text-muted small mb-3"><strong>Tính năng sao lưu & khôi phục dữ liệu:</strong> Xuất toàn bộ cơ sở dữ liệu IndexedDB của bạn (gồm các Tab tự định nghĩa, Ghi chú nhắc nhở, Danh sách sinh nhật và các Cài đặt cấu hình) ra một tệp tin sao lưu `.json`. Bạn có thể lưu trữ tệp tin này và nạp lại bất kỳ lúc nào hoặc khi đổi sang máy tính (PC) khác để tiếp tục sử dụng mà không lo mất mát dữ liệu.</p>
+
+                  <!-- Drag and Drop area for restore -->
+                  <div id="drop-zone" class="drag-drop-zone mb-3">
+                      <i class="fa fa-cloud-upload"></i>
+                      <p class="mb-1 font-weight-bold text-primary">Kéo & thả tệp tin sao lưu vào đây</p>
+                      <p class="text-muted small mb-2">Hoặc click để chọn tệp tin `.json` từ máy tính</p>
+                      <input type="file" id="importSetting" accept=".json" style="display: none;">
+                      <span id="selected-file-info" class="badge badge-info p-2 d-none">Chưa chọn tệp</span>
+                  </div>
+
+                  <div class="d-flex justify-content-between">
+                      <button type="button" class="btn btn-primary" id="fnImportSetting" title="Khôi phục toàn bộ cơ sở dữ liệu"><i class="fa fa-upload" aria-hidden="true"></i> Nhập file sao lưu (Restore)</button>
+                      <button type="button" class="btn btn-success" id="fnExportSetting" title="Sao lưu dữ liệu xuống máy tính"><i class="fa fa-download" aria-hidden="true"></i> Xuất file sao lưu (Backup)</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -83,6 +257,86 @@
             </div>
           </div>
         </div>
+
+        <!-- Tab 4: Quản lý Tab mới & JS tùy ý -->
+        <div class="tab-pane fade" id="tabs-manager" role="tabpanel" aria-labelledby="tabs-manager-tab">
+            <h4 class="mb-3">Thêm và Quản lý các Tab Tùy biến</h4>
+            <div id="tabs-manager-container">
+
+                <!-- Registration Form is always shown inside the tab manager -->
+                <div id="custom-tab-form-card" class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 id="custom-tab-form-title" class="mb-0">Đăng ký Tab</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="custom-tab-form">
+                            <input type="hidden" id="custom-tab-edit-id">
+                            <div class="form-group">
+                                <label>Tên Tab hiển thị *</label>
+                                <input type="text" class="form-control" id="custom-tab-name" required placeholder="Ví dụ: Công cụ QC, Đổi múi giờ">
+                            </div>
+                            <div class="form-group">
+                                <label>Giao diện HTML hiển thị trong Tab</label>
+                                <textarea class="form-control code-textarea" rows="4" id="custom-tab-html" placeholder="Nhập mã HTML..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Script JavaScript tùy biến chạy trong Tab</label>
+                                <div class="mb-2 d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <button type="button" class="btn btn-sm btn-secondary mr-2 btn-boilerplate" data-type="alert">Boilerplate: Alert</button>
+                                        <button type="button" class="btn btn-sm btn-secondary mr-2 btn-boilerplate" data-type="dbAdd">Boilerplate: Add largeDB record</button>
+                                        <button type="button" class="btn btn-sm btn-secondary btn-boilerplate" data-type="injectPage">Boilerplate: Inject JS into Active Page</button>
+                                    </div>
+                                    <div>
+                                        <button type="button" class="btn btn-sm btn-info mr-2" id="btn-format-js" title="Định dạng thụt lề cho JS và HTML"><i class="fa fa-magic"></i> Auto Format</button>
+                                        <button type="button" class="btn btn-sm btn-warning" id="btn-check-syntax-js" title="Kiểm tra lỗi cú pháp JS nhanh"><i class="fa fa-code"></i> Check Syntax</button>
+                                    </div>
+                                </div>
+                                <textarea class="form-control code-textarea" rows="6" id="custom-tab-js" placeholder="Nhập mã JS..."></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="col-md-6 form-group">
+                                    <label>Cách thực thi JavaScript</label>
+                                    <select class="form-control" id="custom-tab-exec-trigger">
+                                        <option value="both">Cả tự động (mở tab) và nút bấm thủ công</option>
+                                        <option value="manual">Chỉ chạy thủ công bằng nút bấm</option>
+                                        <option value="auto">Tự động chạy ngay khi mở tab</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 form-group">
+                                    <label>Ngữ cảnh thực thi (Context)</label>
+                                    <select class="form-control" id="custom-tab-exec-context">
+                                        <option value="popup">Trong Popup (Tương tác giao diện Extension)</option>
+                                        <option value="activeTab">Nhúng vào trang Web hiện tại (Active Page Content)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <button type="button" class="btn btn-light mr-2" id="btn-cancel-custom-tab">Hủy (Cancel)</button>
+                                <button type="submit" class="btn btn-primary">Lưu cấu hình Tab (Save)</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <h5 class="border-bottom pb-2">Danh sách Tab hiện tại của bạn</h5>
+                <div id="tabs-list-empty" class="text-muted">Chưa có tab tự định nghĩa nào. Hãy điền form đăng ký ở trên để thêm tab mới.</div>
+                <div id="tabs-list-table-container" style="display: none;">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Tên Tab</th>
+                                <th>Thực thi</th>
+                                <th>Ngữ cảnh</th>
+                                <th style="width: 130px;">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabs-list-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
       </div>
     </div>
 </body>
