@@ -18,6 +18,9 @@ function openDB() {
             if (!db.objectStoreNames.contains("birthdays")) {
                 db.createObjectStore("birthdays", { keyPath: "id", autoIncrement: true });
             }
+            if (!db.objectStoreNames.contains("settings")) {
+                db.createObjectStore("settings", { keyPath: "key" });
+            }
         };
 
         request.onsuccess = (event) => {

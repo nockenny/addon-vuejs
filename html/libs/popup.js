@@ -4,10 +4,38 @@ function Mapping(name, colDes, colData) {
     this.colData = colData - 1;
 }
 
-$(document).ready(function() {
+$(document).ready(async function() {
+    // --- Load Mapping settings from IndexedDB store "settings" on popup open ---
+    async function loadMappings() {
+        try {
+            const mapper = await getSetting("RKSetings_mapper");
+            if (mapper && Array.isArray(mapper)) {
+                mapper.forEach(map => {
+                    const colDesVal = Number(map.colDes) + 1;
+                    const colDataVal = Number(map.colData) + 1;
+                    if (map.name === "hour") {
+                        $('#hour-des').val(colDesVal);
+                        $('#hour-resource').val(colDataVal);
+                    } else if (map.name === "comment") {
+                        $('#comment-des').val(colDesVal);
+                        $('#comment-resource').val(colDataVal);
+                    } else if (map.name === "function") {
+                        $('#function-des').val(colDesVal);
+                        $('#function-resource').val(colDataVal);
+                    } else if (map.name === "phase") {
+                        $('#phase-des').val(colDesVal);
+                        $('#phase-resource').val(colDataVal);
+                    }
+                });
+            }
+        } catch (e) {
+            console.error("Lỗi tải mapping từ IndexedDB:", e);
+        }
+    }
+
     // --- Legacy / QC Logic ---
     if (document.getElementById('fnSaveMapping')) {
-        document.getElementById('fnSaveMapping').addEventListener('click', () => {
+        document.getElementById('fnSaveMapping').addEventListener('click', async () => {
             var mapdata = [
                 new Mapping("hour", $('#hour-des').val(), $('#hour-resource').val()),
                 new Mapping("comment", $('#comment-des').val(), $('#comment-resource').val()),
@@ -15,97 +43,158 @@ $(document).ready(function() {
                 new Mapping("phase", $('#phase-des').val(), $('#phase-resource').val())
             ];
 
-            chrome.storage.sync.get(["RKSetings"], function(items) {
-                if (items == undefined) {
-                    items = {};
-                }
-                items.mapper = mapdata;
-                chrome.storage.sync.set({"RKSetings": items}, function() {
-                    alert('Settings saved');
-                });
-            });
+            try {
+                // Save settings purely in IndexedDB
+                await setSetting("RKSetings_mapper", mapdata);
+                alert('Settings saved to IndexedDB!');
+            } catch (err) {
+                alert("Lỗi lưu cấu hình: " + err.message);
+            }
         });
+    }
+
+    // --- Drag and Drop File Handlers ---
+    const dropZone = $('#drop-zone');
+    const fileInput = $('#importSetting');
+    const fileInfo = $('#selected-file-info');
+
+    // Click on drop zone triggers hidden file input click
+    dropZone.on('click', function() {
+        fileInput.trigger('click');
+    });
+
+    // File input selection change
+    fileInput.on('change', function() {
+        const file = this.files[0];
+        if (file) {
+            fileInfo.text(`Đã chọn: ${file.name}`).removeClass('d-none');
+        } else {
+            fileInfo.addClass('d-none');
+        }
+    });
+
+    // Drag events for drop zone
+    dropZone.on('dragover dragenter', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.addClass('dragover');
+    });
+
+    dropZone.on('dragleave drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.removeClass('dragover');
+    });
+
+    dropZone.on('drop', function(e) {
+        const files = e.originalEvent.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput[0].files = files;
+            const file = files[0];
+            fileInfo.text(`Đã chọn: ${file.name}`).removeClass('d-none');
+        }
+    });
+
+    // Helper to process restore logic
+    async function processRestore(file) {
+        if (!file) {
+            alert("Vui lòng kéo thả hoặc chọn tệp tin sao lưu (.json) trước!");
+            return;
+        }
+        var reader = new FileReader();
+        reader.readAsText(file, "UTF-8");
+        reader.onload = async function (evt) {
+            try {
+                var backupData = JSON.parse(evt.target.result);
+
+                // Determine target DB object to compute counts
+                let dbData = backupData.indexedDBBackup ? backupData.indexedDBBackup : backupData;
+
+                // Count items to formulate comprehensive Vietnamese stats message
+                const tabCount = (dbData.custom_tabs && Array.isArray(dbData.custom_tabs)) ? dbData.custom_tabs.length : 0;
+                const noteCount = (dbData.notes_reminders && Array.isArray(dbData.notes_reminders)) ? dbData.notes_reminders.length : 0;
+                const bdayCount = (dbData.birthdays && Array.isArray(dbData.birthdays)) ? dbData.birthdays.length : 0;
+                const settingCount = (dbData.settings && Array.isArray(dbData.settings)) ? dbData.settings.length : 0;
+
+                // Restore IndexedDB Data
+                if (backupData.indexedDBBackup) {
+                    await importFullBackup(backupData.indexedDBBackup);
+                } else {
+                    await importFullBackup(backupData);
+                }
+
+                // Display statistics details inside success alert
+                alert(`Khôi phục thành công: ${tabCount} Tab tùy biến, ${noteCount} Ghi chú nhắc nhở, ${bdayCount} thông tin Sinh nhật và cấu hình cài đặt (${settingCount} cài đặt)!`);
+
+                // Refresh dynamic elements
+                if (window.renderDynamicTabs) {
+                    await window.renderDynamicTabs();
+                }
+                refreshNotesList();
+                refreshTabsList();
+                refreshBirthdaysList();
+                await loadMappings();
+
+                // Reset file info
+                fileInput.val('');
+                fileInfo.addClass('d-none');
+
+            } catch (e) {
+                alert("Lỗi phân tích file sao lưu: " + e.message);
+            }
+        };
+        reader.onerror = function (evt) {
+            alert("Lỗi đọc file sao lưu.");
+        };
     }
 
     // --- Import / Export Backup and settings ---
     if (document.getElementById('fnImportSetting')) {
         document.getElementById('fnImportSetting').addEventListener('click', () => {
-            var file = document.getElementById("importSetting").files[0];
-            if (file) {
-                var reader = new FileReader();
-                reader.readAsText(file, "UTF-8");
-                reader.onload = async function (evt) {
-                    try {
-                        var backupData = JSON.parse(evt.target.result);
-
-                        // Restore Chrome Sync setting
-                        if (backupData.RKSetings) {
-                            chrome.storage.sync.set({"RKSetings": backupData.RKSetings});
-                        }
-                        if (backupData.setting) {
-                            chrome.storage.sync.set({"setting": backupData.setting});
-                        }
-
-                        // Restore IndexedDB Data if included in backup
-                        if (backupData.indexedDBBackup) {
-                            await importFullBackup(backupData.indexedDBBackup);
-                        }
-
-                        alert('Khôi phục dữ liệu sao lưu thành công!');
-
-                        // Refresh dynamic elements
-                        if (window.renderDynamicTabs) {
-                            await window.renderDynamicTabs();
-                        }
-                        refreshNotesList();
-                        refreshTabsList();
-                        refreshBirthdaysList();
-
-                    } catch (e) {
-                        alert("Lỗi phân tích file sao lưu: " + e.message);
-                    }
-                };
-                reader.onerror = function (evt) {
-                    alert("error reading file");
-                }
-            } else {
-                alert("Vui lòng chọn file sao lưu (.json)");
-            }
+            var file = fileInput[0].files[0];
+            processRestore(file);
         });
     }
 
     if (document.getElementById('fnExportSetting')) {
         document.getElementById('fnExportSetting').addEventListener('click', async () => {
-            chrome.storage.sync.get(null, async function(items) {
-                try {
-                    // Fetch IndexedDB Full Backup
-                    const dbBackup = await exportFullBackup();
+            try {
+                // Fetch IndexedDB Full Backup (which contains settings, custom_tabs, notes, and birthdays)
+                const dbBackup = await exportFullBackup();
 
-                    // Assemble combined backup payload
-                    const backupPayload = {
-                        ...items,
-                        indexedDBBackup: dbBackup
-                    };
+                // Assemble combined backup payload
+                const backupPayload = {
+                    indexedDBBackup: dbBackup
+                };
 
-                    // Robust Exporting using Blob & URL.createObjectURL to support large database sizes cleanly
-                    const blob = new Blob([JSON.stringify(backupPayload, null, 2)], { type: "application/json;charset=utf-8" });
-                    const downloadUrl = URL.createObjectURL(blob);
+                // Formulate a beautiful time-stamped backup name with the extension name prefix
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const date = String(now.getDate()).padStart(2, '0');
+                const hour = String(now.getHours()).padStart(2, '0');
+                const minute = String(now.getMinutes()).padStart(2, '0');
 
-                    var a = window.document.createElement('a');
-                    a.setAttribute('href', downloadUrl);
-                    a.setAttribute('download', 'extension_full_backup.json');
-                    window.document.body.appendChild(a);
-                    a.click();
+                const filename = `AdvancedLargeDBExtension_Backup_${year}-${month}-${date}_${hour}h${minute}.json`;
 
-                    // Cleanup URL object
-                    setTimeout(() => {
-                        window.document.body.removeChild(a);
-                        URL.revokeObjectURL(downloadUrl);
-                    }, 100);
-                } catch (err) {
-                    alert("Lỗi xuất sao lưu: " + err.message);
-                }
-            });
+                // Robust Exporting using Blob & URL.createObjectURL to support large database sizes cleanly
+                const blob = new Blob([JSON.stringify(backupPayload, null, 2)], { type: "application/json;charset=utf-8" });
+                const downloadUrl = URL.createObjectURL(blob);
+
+                var a = window.document.createElement('a');
+                a.setAttribute('href', downloadUrl);
+                a.setAttribute('download', filename);
+                window.document.body.appendChild(a);
+                a.click();
+
+                // Cleanup URL object
+                setTimeout(() => {
+                    window.document.body.removeChild(a);
+                    URL.revokeObjectURL(downloadUrl);
+                }, 100);
+            } catch (err) {
+                alert("Lỗi xuất sao lưu: " + err.message);
+            }
         });
     }
 
@@ -521,4 +610,5 @@ $(document).ready(function() {
     refreshNotesList();
     refreshTabsList();
     refreshBirthdaysList();
+    await loadMappings();
 });

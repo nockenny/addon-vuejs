@@ -23,6 +23,11 @@ function openDB() {
             if (!db.objectStoreNames.contains("birthdays")) {
                 db.createObjectStore("birthdays", { keyPath: "id", autoIncrement: true });
             }
+
+            // 4. Table for settings (replacing chrome.storage.sync completely)
+            if (!db.objectStoreNames.contains("settings")) {
+                db.createObjectStore("settings", { keyPath: "key" });
+            }
         };
 
         request.onsuccess = (event) => {
@@ -159,17 +164,41 @@ async function deleteBirthday(id) {
     });
 }
 
+// Settings API (comprehensive replacement for chrome.storage.sync)
+async function getSetting(key) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction("settings", "readonly");
+        const store = transaction.objectStore("settings");
+        const request = store.get(key);
+        request.onsuccess = () => resolve(request.result ? request.result.value : null);
+        request.onerror = () => reject(request.error);
+    });
+}
+
+async function setSetting(key, value) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction("settings", "readwrite");
+        const store = transaction.objectStore("settings");
+        const request = store.put({ key: key, value: value });
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+
 // Backup & Restore Database Functions
 async function exportFullBackup() {
     const db = await openDB();
     const backup = {
         custom_tabs: [],
         notes_reminders: [],
-        birthdays: []
+        birthdays: [],
+        settings: []
     };
 
     return new Promise((resolve, reject) => {
-        const transaction = db.transaction(["custom_tabs", "notes_reminders", "birthdays"], "readonly");
+        const transaction = db.transaction(["custom_tabs", "notes_reminders", "birthdays", "settings"], "readonly");
 
         transaction.objectStore("custom_tabs").getAll().onsuccess = (e) => {
             backup.custom_tabs = e.target.result;
@@ -181,6 +210,10 @@ async function exportFullBackup() {
 
         transaction.objectStore("birthdays").getAll().onsuccess = (e) => {
             backup.birthdays = e.target.result;
+        };
+
+        transaction.objectStore("settings").getAll().onsuccess = (e) => {
+            backup.settings = e.target.result;
         };
 
         transaction.oncomplete = () => {
@@ -197,12 +230,13 @@ async function importFullBackup(backup) {
     const db = await openDB();
 
     return new Promise((resolve, reject) => {
-        const transaction = db.transaction(["custom_tabs", "notes_reminders", "birthdays"], "readwrite");
+        const transaction = db.transaction(["custom_tabs", "notes_reminders", "birthdays", "settings"], "readwrite");
 
         // Clear all first
         transaction.objectStore("custom_tabs").clear();
         transaction.objectStore("notes_reminders").clear();
         transaction.objectStore("birthdays").clear();
+        transaction.objectStore("settings").clear();
 
         // Add all custom_tabs
         if (backup.custom_tabs && Array.isArray(backup.custom_tabs)) {
@@ -225,6 +259,14 @@ async function importFullBackup(backup) {
             const birthdaysStore = transaction.objectStore("birthdays");
             backup.birthdays.forEach(item => {
                 birthdaysStore.add(item);
+            });
+        }
+
+        // Add all settings
+        if (backup.settings && Array.isArray(backup.settings)) {
+            const settingsStore = transaction.objectStore("settings");
+            backup.settings.forEach(item => {
+                settingsStore.add(item);
             });
         }
 
