@@ -19,12 +19,7 @@ function openDB() {
                 db.createObjectStore("notes_reminders", { keyPath: "id", autoIncrement: true });
             }
 
-            // 3. Table for general large database records (Data Dashboard)
-            if (!db.objectStoreNames.contains("general_large_data")) {
-                db.createObjectStore("general_large_data", { keyPath: "id", autoIncrement: true });
-            }
-
-            // 4. Table for birthdays
+            // 3. Table for birthdays
             if (!db.objectStoreNames.contains("birthdays")) {
                 db.createObjectStore("birthdays", { keyPath: "id", autoIncrement: true });
             }
@@ -130,51 +125,6 @@ async function deleteNote(id) {
     });
 }
 
-// General Large Data API
-async function getAllGeneralData() {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction("general_large_data", "readonly");
-        const store = transaction.objectStore("general_large_data");
-        const request = store.getAll();
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-    });
-}
-
-async function addGeneralData(data) {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction("general_large_data", "readwrite");
-        const store = transaction.objectStore("general_large_data");
-        const request = store.add(data);
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-    });
-}
-
-async function clearGeneralData() {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction("general_large_data", "readwrite");
-        const store = transaction.objectStore("general_large_data");
-        const request = store.clear();
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-    });
-}
-
-async function deleteGeneralData(id) {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction("general_large_data", "readwrite");
-        const store = transaction.objectStore("general_large_data");
-        const request = store.delete(id);
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-    });
-}
-
 // Birthdays API
 async function getAllBirthdays() {
     const db = await openDB();
@@ -215,12 +165,11 @@ async function exportFullBackup() {
     const backup = {
         custom_tabs: [],
         notes_reminders: [],
-        general_large_data: [],
         birthdays: []
     };
 
     return new Promise((resolve, reject) => {
-        const transaction = db.transaction(["custom_tabs", "notes_reminders", "general_large_data", "birthdays"], "readonly");
+        const transaction = db.transaction(["custom_tabs", "notes_reminders", "birthdays"], "readonly");
 
         transaction.objectStore("custom_tabs").getAll().onsuccess = (e) => {
             backup.custom_tabs = e.target.result;
@@ -228,10 +177,6 @@ async function exportFullBackup() {
 
         transaction.objectStore("notes_reminders").getAll().onsuccess = (e) => {
             backup.notes_reminders = e.target.result;
-        };
-
-        transaction.objectStore("general_large_data").getAll().onsuccess = (e) => {
-            backup.general_large_data = e.target.result;
         };
 
         transaction.objectStore("birthdays").getAll().onsuccess = (e) => {
@@ -252,12 +197,11 @@ async function importFullBackup(backup) {
     const db = await openDB();
 
     return new Promise((resolve, reject) => {
-        const transaction = db.transaction(["custom_tabs", "notes_reminders", "general_large_data", "birthdays"], "readwrite");
+        const transaction = db.transaction(["custom_tabs", "notes_reminders", "birthdays"], "readwrite");
 
         // Clear all first
         transaction.objectStore("custom_tabs").clear();
         transaction.objectStore("notes_reminders").clear();
-        transaction.objectStore("general_large_data").clear();
         transaction.objectStore("birthdays").clear();
 
         // Add all custom_tabs
@@ -273,14 +217,6 @@ async function importFullBackup(backup) {
             const notesStore = transaction.objectStore("notes_reminders");
             backup.notes_reminders.forEach(note => {
                 notesStore.add(note);
-            });
-        }
-
-        // Add all general data
-        if (backup.general_large_data && Array.isArray(backup.general_large_data)) {
-            const generalDataStore = transaction.objectStore("general_large_data");
-            backup.general_large_data.forEach(item => {
-                generalDataStore.add(item);
             });
         }
 

@@ -59,7 +59,6 @@ $(document).ready(function() {
                         }
                         refreshNotesList();
                         refreshTabsList();
-                        refreshDashboard();
                         refreshBirthdaysList();
 
                     } catch (e) {
@@ -131,7 +130,7 @@ $(document).ready(function() {
         try {
             const list = await getAllBirthdays();
 
-            // Sort birthdays by month & day (ascending order from Jan 1st to Dec 31st)
+            // Sort birthdays strictly ascending by date of birth (month first, then day)
             list.sort((a, b) => {
                 const dateA = new Date(a.date);
                 const dateB = new Date(b.date);
@@ -145,8 +144,8 @@ $(document).ready(function() {
             tbody.empty();
 
             const now = new Date();
+            const currentMonth = now.getMonth(); // 0-indexed (0 is January, 11 is December)
             const currentYear = now.getFullYear();
-            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
             const upcomingList = [];
 
@@ -163,23 +162,17 @@ $(document).ready(function() {
 
                     // Calculate next birthday date
                     let nextBday = new Date(currentYear, dob.getMonth(), dob.getDate());
-                    if (nextBday.getTime() < todayStart) {
-                        nextBday.setFullYear(currentYear + 1);
-                    }
 
                     // Calculate upcoming age
                     const ageNext = nextBday.getFullYear() - dob.getFullYear();
 
-                    // Check if upcoming birthday is within the next 7 days
-                    const diffTime = nextBday.getTime() - todayStart;
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                    if (diffDays >= 0 && diffDays <= 7) {
+                    // Check if birthday is in the CURRENT calendar month
+                    if (dob.getMonth() === currentMonth) {
                         upcomingList.push({
                             name: item.name,
-                            daysLeft: diffDays,
                             nextAge: ageNext,
-                            bdayFormatted: formatDate(item.date)
+                            bdayFormatted: formatDate(item.date),
+                            day: dob.getDate()
                         });
                     }
 
@@ -198,25 +191,29 @@ $(document).ready(function() {
                     tbody.append(rowHtml);
                 });
 
-                // Display upcoming birthdays banner and trigger chrome notifications
+                // Display upcoming birthdays of CURRENT calendar month in alert banner
                 const alertBanner = $('#upcoming-birthdays-alert');
                 const alertListContainer = $('#upcoming-birthdays-list');
                 alertListContainer.empty();
 
                 if (upcomingList.length > 0) {
+                    // Sort the upcoming list by day ascending
+                    upcomingList.sort((a, b) => a.day - b.day);
+
                     alertBanner.show();
                     upcomingList.forEach(up => {
-                        const daysLeftText = up.daysLeft === 0 ? "hôm nay!" : `sau ${up.daysLeft} ngày nữa (${up.bdayFormatted})`;
-                        const itemHtml = `<li><strong>${up.name}</strong> bước sang tuổi ${up.nextAge} vào <strong>${daysLeftText}</strong></li>`;
+                        const isToday = up.day === now.getDate();
+                        const whenText = isToday ? "hôm nay!" : `vào ngày ${up.day}/${currentMonth + 1}`;
+                        const itemHtml = `<li><strong>${up.name}</strong> bước sang tuổi ${up.nextAge} <strong>${whenText}</strong></li>`;
                         alertListContainer.append(itemHtml);
 
                         // Trigger Chrome System Notification
                         if (window.chrome && chrome.notifications) {
-                            chrome.notifications.create(`bday_${up.name}_${up.daysLeft}`, {
+                            chrome.notifications.create(`bday_${up.name}_month`, {
                                 type: "basic",
                                 iconUrl: "../images/icon.png",
-                                title: "Sắp tới sinh nhật!",
-                                message: `Sắp tới sinh nhật của ${up.name} bước sang tuổi ${up.nextAge} vào ${daysLeftText}.`,
+                                title: "Sinh nhật trong tháng này!",
+                                message: `${up.name} bước sang tuổi ${up.nextAge} vào ngày ${up.day}/${currentMonth + 1}.`,
                                 priority: 1
                             });
                         }
@@ -515,147 +512,13 @@ $(document).ready(function() {
         }
     });
 
-
-    // --- 3. Large DB Dashboard Logic ---
-    let allRecords = [];
-
-    async function refreshDashboard() {
-        try {
-            allRecords = await getAllGeneralData();
-            renderDashboardTable();
-        } catch (e) {
-            console.error(e);
-        }
-    }
-
-    function renderDashboardTable() {
-        const query = $('#dashboard-search-query').val().toLowerCase().trim();
-        const filtered = query === "" ? allRecords : allRecords.filter(r =>
-            (r.key && r.key.toLowerCase().includes(query)) ||
-            (r.value && r.value.toLowerCase().includes(query))
-        );
-
-        const tbody = $('#dashboard-records-tbody');
-        tbody.empty();
-
-        if (filtered.length === 0) {
-            $('#dashboard-list-empty').show();
-            $('#dashboard-table-container').hide();
-        } else {
-            $('#dashboard-list-empty').hide();
-            $('#dashboard-table-container').show();
-
-            filtered.forEach(rec => {
-                const rowHtml = `
-                    <tr>
-                        <td>${rec.id}</td>
-                        <td><strong>${rec.key}</strong></td>
-                        <td style="max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${rec.value}">
-                            ${rec.value}
-                        </td>
-                        <td>${formatTime(rec.createdAt)}</td>
-                        <td>
-                            <button class="btn btn-sm btn-danger btn-delete-dashboard-rec" data-id="${rec.id}"><i class="fa fa-trash"></i></button>
-                        </td>
-                    </tr>
-                `;
-                tbody.append(rowHtml);
-            });
-        }
-    }
-
-    $('#add-test-data-form').on('submit', async function(e) {
-        e.preventDefault();
-        const key = $('#test-data-key').val();
-        const value = $('#test-data-value').val();
-
-        if (!key.trim() || !value.trim()) return;
-
-        try {
-            await addGeneralData({
-                key: key,
-                value: value,
-                createdAt: Date.now()
-            });
-
-            $('#test-data-key').val('');
-            $('#test-data-value').val('');
-            await refreshDashboard();
-        } catch (err) {
-            alert("Lỗi thêm dữ liệu: " + err.message);
-        }
-    });
-
-    $(document).on('click', '.btn-delete-dashboard-rec', async function() {
-        const id = $(this).data('id');
-        if (confirm("Bạn có chắc chắn muốn xóa bản ghi dữ liệu này?")) {
-            try {
-                await deleteGeneralData(Number(id));
-                await refreshDashboard();
-            } catch (err) {
-                alert("Lỗi xóa bản ghi: " + err.message);
-            }
-        }
-    });
-
-    $('#btn-clear-all-db').on('click', async function() {
-        if (confirm("CẢNH BÁO: Bạn có chắc chắn muốn xóa sạch toàn bộ bản ghi dữ liệu lớn?")) {
-            try {
-                await clearGeneralData();
-                await refreshDashboard();
-            } catch (err) {
-                alert("Lỗi xóa dữ liệu: " + err.message);
-            }
-        }
-    });
-
-    $('#dashboard-search-query').on('input', function() {
-        renderDashboardTable();
-    });
-
-    $('#btn-export-csv').on('click', function() {
-        if (allRecords.length === 0) {
-            alert("Không có dữ liệu để xuất!");
-            return;
-        }
-
-        let csvContent = "ID,Khóa / Tiêu đề,Giá trị chi tiết,Thời gian tạo\n";
-
-        allRecords.forEach(r => {
-            const row = [
-                r.id,
-                `"${(r.key || '').replace(/"/g, '""')}"`,
-                `"${(r.value || '').replace(/"/g, '""')}"`,
-                `"${formatTime(r.createdAt)}"`
-            ];
-            csvContent += row.join(",") + "\n";
-        });
-
-        // Robust CSV Download using Blob to handle large datasets seamlessly without crashing
-        const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8" });
-        const downloadUrl = URL.createObjectURL(blob);
-
-        const a = document.createElement("a");
-        a.setAttribute("href", downloadUrl);
-        a.setAttribute("download", `indexedDB_export_${Date.now()}.csv`);
-        document.body.appendChild(a);
-        a.click();
-
-        setTimeout(() => {
-            document.body.removeChild(a);
-            URL.revokeObjectURL(downloadUrl);
-        }, 100);
-    });
-
     // Make global functions so helper tools can trigger reload
     window.refreshNotesList = refreshNotesList;
     window.refreshTabsList = refreshTabsList;
-    window.refreshDashboard = refreshDashboard;
     window.refreshBirthdaysList = refreshBirthdaysList;
 
     // Load initial data
     refreshNotesList();
     refreshTabsList();
-    refreshDashboard();
     refreshBirthdaysList();
 });
